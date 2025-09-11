@@ -25,7 +25,9 @@ import org.multipaz.mdoc.connectionmethod.MdocConnectionMethod
  * @property engagementMethods Map of engagement methods to their supported connection methods.
  */
 class TransferConfig private constructor(
-    val engagementMethods: Map<EngagementMethod, List<MdocConnectionMethod>>
+    val engagementMethods: Map<EngagementMethod, List<MdocConnectionMethod>>,
+    val bleUseL2CAP: Boolean,
+    val bleClearCache: Boolean
 ) {
 
     /**
@@ -49,6 +51,8 @@ class TransferConfig private constructor(
      */
     class Builder {
         private val engagementMethods = mutableMapOf<EngagementMethod, List<MdocConnectionMethod>>()
+        private var bleUseL2CAP: Boolean = false
+        private var bleClearCache: Boolean = false
 
         /**
          * Adds an engagement method with its supported connection methods.
@@ -79,6 +83,24 @@ class TransferConfig private constructor(
         }
 
         /**
+         * Sets the preference for use BLE L2CAP transmission profile.
+         * Use L2CAP if supported by the OS and remote mdoc.
+         * The default value for this is `false`.
+         */
+        fun useBleL2CAP(use: Boolean) = apply {
+            bleUseL2CAP = use
+        }
+
+        /**
+         * Sets whether to clear the BLE Service Cache before service discovery when acting as
+         * a GATT Client.
+         * The default value for this is `false`.
+         */
+        fun clearBleCacheOnDisconnect(clear: Boolean) = apply {
+            bleClearCache = clear
+        }
+
+        /**
          * Builds a [TransferConfig] instance with the current configuration.
          *
          * @return A new [TransferConfig] instance.
@@ -86,7 +108,11 @@ class TransferConfig private constructor(
          */
         fun build(): TransferConfig {
             check(engagementMethods.isNotEmpty()) { "No engagement methods configured" }
-            return TransferConfig(engagementMethods.toMap())
+            return TransferConfig(
+                engagementMethods.toMap(),
+                bleUseL2CAP = bleUseL2CAP,
+                bleClearCache = bleClearCache
+            )
         }
     }
 
