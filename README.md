@@ -50,6 +50,17 @@ The released software is an initial development release version:
 
 - Android 8 (API level 26) or higher
 
+## Permissions
+
+You need to declare the following permissions in the AndroidManifest and request them at runtime:
+```xml
+<uses-permission android:name="android.permission.CAMERA" />
+<uses-permission android:name="android.permission.INTERNET" />
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN"/>
+<uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE"/>
+```
+
 ### Dependencies
 
 To use snapshot versions add the following to your project's settings.gradle file:
@@ -90,17 +101,16 @@ verifier.
 
 ```kotlin
 // Configuring the verifier
-
 lateinit var context: Context
-// certificates of trusted issuers
-val certificates = listOf<X509Certificate>()
-val trustPoints: List<TrustPoint> = certificates.map { TrustPoint(X509Cert(it.encoded)) }
-val config = EudiVerifierConfig {
-    trustPoints(trustPoints)
-}
-
 // An instance of EudiVerifier is built through the invoke operator
-val eudiVerifier = EudiVerifier(context, config)
+val eudiVerifier = EudiVerifier(context) {
+    // certificates of trusted issuers
+    trustedCertificates(
+        R.raw.apple_iaca,
+        R.raw.credenceid_mdl_iaca_root,
+        R.raw.google_mdl_iaca_cert
+    )
+}
 ```
 
 ### Transfer documents
@@ -125,7 +135,13 @@ val connectionMethods = listOf<MdocConnectionMethod>(
 )
 
 val transferManager = eudiVerifier.createTransferManager {
-    addEngagementMethod(TransferConfig.EngagementMethod.QR, connectionMethods)
+    addEngagementMethod(
+        TransferConfig.EngagementMethod.QR,
+        connectionMethods
+    )
+    // Optional configurations, omitting defaults to setting them false
+    useBleL2CAP(false)
+    clearBleCacheOnDisconnect(false)
 }
 ```
 
@@ -176,14 +192,16 @@ document.
 
 lateinit var context: Context
 // certificates of trusted issuers
-val certificates = listOf<X509Certificate>()
-val trustPoints: List<TrustPoint> = certificates.map { TrustPoint(X509Cert(it.encoded)) }
-val config = EudiVerifierConfig {
-    trustPoints(trustPoints)
-}
 
 // An instance of EudiVerifier is built through the invoke operator
-val eudiVerifier = EudiVerifier(context, config)
+// Calling trustedCertificates configuration function is mandatory, not calling it causes a compile error 
+eudiVerifier = EudiVerifier(context) {
+    trustedCertificates(
+        R.raw.apple_iaca,
+        R.raw.credenceid_mdl_iaca_root,
+        R.raw.google_mdl_iaca_cert
+    )
+}
 
 // create transfer manager
 
@@ -197,7 +215,14 @@ val connectionMethods = listOf<MdocConnectionMethod>(
 )
 
 val transferManager = eudiVerifier.createTransferManager {
-    addEngagementMethod(TransferConfig.EngagementMethod.QR, connectionMethods)
+    addEngagementMethod(
+        TransferConfig.EngagementMethod.QR,
+        connectionMethods
+    )
+
+    // Optional configurations, omitting defaults to setting them false
+    useBleL2CAP(true)
+    clearBleCacheOnDisconnect(true)
 }
 
 // attach listener

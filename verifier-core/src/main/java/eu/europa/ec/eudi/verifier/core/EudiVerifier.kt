@@ -16,12 +16,16 @@
 package eu.europa.ec.eudi.verifier.core
 
 import android.content.Context
+import androidx.annotation.RawRes
 import eu.europa.ec.eudi.verifier.core.statium.DocumentStatusResolver
 import eu.europa.ec.eudi.verifier.core.transfer.TransferManagerFactory
 import eu.europa.ec.eudi.wallet.statium.VerifyStatusListTokenSignatureX5c
 import kotlinx.datetime.Instant
 import org.multipaz.mdoc.response.DeviceResponseParser
 import org.multipaz.trustmanagement.TrustManager
+import org.multipaz.trustmanagement.TrustPoint
+import java.security.cert.X509Certificate
+import org.multipaz.crypto.X509Cert
 
 /**
  * Main entry point for the EUDI verifier API, combining transfer management and document status resolution.
@@ -85,7 +89,25 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
         private val config: EudiVerifierConfig,
     ) {
 
+        private var trustPoints: List<TrustPoint> = emptyList()
+
         private var documentStatusResolver: DocumentStatusResolver? = null
+
+        /**
+         * Configures the verifier to trust a custom set of certificates provided
+         * as raw resource IDs from the app.
+         */
+        fun trustedCertificates(@RawRes vararg certificateRawIds: Int) {
+            val certificates = CertificateProvider.loadCertificates(context, certificateRawIds.toList())
+            trustPoints = certificates.map { TrustPoint(X509Cert(it.encoded)) }
+        }
+
+        /**
+         * Configures the verifier to trust a pre-loaded list of X509Certificates.
+         */
+        fun trustedCertificates(certificates: List<X509Certificate>) {
+            trustPoints = certificates.map { TrustPoint(X509Cert(it.encoded)) }
+        }
 
         fun withDocumentStatusResolver(documentStatusResolver: DocumentStatusResolver) = apply {
             this.documentStatusResolver = documentStatusResolver

@@ -123,7 +123,10 @@ class TransferManagerImpl(
             responseListener,
             context.mainExecutor()
         ).setDataTransportOptions(
-            DataTransportOptions.Builder().build()
+            DataTransportOptions.Builder()
+                .setBleUseL2CAP(config.bleUseL2CAP)
+                .setBleClearCache(config.bleClearCache)
+                .build()
         ).build()
         // This is not required ove BLE !! this will be set in enableNFCDeviceEngagement
         // Αν αφορα τον 1 απο τους 2 τροπους NFC, Negotiated or Static
