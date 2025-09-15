@@ -16,24 +16,24 @@
 
 package eu.europa.ec.eudi.verifier.core.statium
 
-import android.util.Log
 import eu.europa.ec.eudi.statium.GetStatus
 import eu.europa.ec.eudi.statium.GetStatusListToken
 import eu.europa.ec.eudi.statium.Status
 import eu.europa.ec.eudi.statium.StatusIndex
 import eu.europa.ec.eudi.statium.StatusReference
 import eu.europa.ec.eudi.statium.TokenStatusListSpec
-import eu.europa.ec.eudi.statium.VerifyStatusListTokenSignature
+import eu.europa.ec.eudi.statium.VerifyStatusListTokenJwtSignature
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
 import org.multipaz.cbor.Cbor
 import org.multipaz.cbor.DataItem
 import org.multipaz.cbor.Tstr
 import org.multipaz.cose.CoseSign1
 import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 /**
  * Default implementation of [DocumentStatusResolver] that validates document status
@@ -47,12 +47,12 @@ import kotlin.time.Duration
  *
  * @param verifySignature A function to verify status list token signatures
  * @param allowedClockSkew The maximum time difference allowed between local and server clocks
- * @param ktorHttpClientFactory A factory function to create HTTP clients for status list requests
+ * @param ktorHttpClient A factory function to create HTTP clients for status list requests
  */
 class DocumentStatusResolverImpl(
-    internal val verifySignature: VerifyStatusListTokenSignature,
+    internal val verifySignature: VerifyStatusListTokenJwtSignature,
     internal val allowedClockSkew: Duration,
-    internal val ktorHttpClientFactory: () -> HttpClient,
+    internal val ktorHttpClient: HttpClient,
 ) : DocumentStatusResolver {
 
     /**
@@ -61,6 +61,7 @@ class DocumentStatusResolverImpl(
      * @param response The device response containing CBOR-encoded document data
      * @return A list of [Result] objects with the resolved status of each document
      */
+    @OptIn(ExperimentalTime::class)
     override suspend fun resolveStatus(response: DeviceResponse): List<Result<Status>> {
         return withContext(Dispatchers.IO) {
             // Extract the "documents" field from the CBOR-encoded response
@@ -88,7 +89,7 @@ class DocumentStatusResolverImpl(
                     // Create a JWT-based status list token retriever with verification capability
                     val getStatusListToken = GetStatusListToken.usingJwt(
                         clock = Clock.System,
-                        httpClientFactory = ktorHttpClientFactory,
+                        httpClient = ktorHttpClient,
                         verifyStatusListTokenSignature = verifySignature,
                         allowedClockSkew = allowedClockSkew,
                     )
