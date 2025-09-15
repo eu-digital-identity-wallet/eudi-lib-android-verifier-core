@@ -16,6 +16,7 @@
 
 package eu.europa.ec.eudi.wallet.statium
 
+import android.util.Log
 import com.nimbusds.jose.crypto.ECDSAVerifier
 import com.nimbusds.jose.crypto.RSASSAVerifier
 import com.nimbusds.jwt.SignedJWT
@@ -24,6 +25,7 @@ import eu.europa.ec.eudi.statium.VerifyStatusListTokenSignature
 import kotlinx.datetime.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import org.multipaz.cbor.Cbor
 import org.multipaz.crypto.X509CertChain
 import org.multipaz.crypto.javaX509Certificate
 import org.multipaz.trustmanagement.TrustManager
@@ -78,6 +80,7 @@ class VerifyStatusListTokenSignatureX5c(
         val signedJwt = SignedJWT.parse(statusListToken)
 
         val chain = signedJwt.header?.x509CertChain
+            ?.map { it.toString() }
             ?.let { Json.encodeToJsonElement(it) }
             ?.let { X509CertChain.fromX5c(it) }
 

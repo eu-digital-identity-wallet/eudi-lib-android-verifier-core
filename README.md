@@ -23,6 +23,9 @@ The library consists of the following main components:
     - Interface for managing the transfer process between verifier and holder devices
     - Provides methods to initiate device engagement, send requests, and manage listeners for
       transfer events
+- DocumentStatusResolver
+    - Interface for resolving the status of documentsClaims in a device response.
+    - The status resolver performs validation against status list services to determine if documentsClaims are valid, invalid or suspended.
 
 ## Disclaimer
 
@@ -268,13 +271,18 @@ transferManager.addListener { event ->
 
         TransferEvent.RequestSent -> println("Request has been sent")
         is TransferEvent.ResponseReceived -> {
-            // cast to DeviceResponse
-            val response = event.response as DeviceResponse
+            
+            val response = event.response
 
             for (doc in response.deviceResponse.documents) {
                 // trust if a trust point was found
                 val isDocumentTrusted = eudiVerifier.isDocumentTrusted(doc)
                 println("${doc.docType} Trusted: ${isDocumentTrusted.isTrusted}")
+            }
+
+            // Call suspend function resolveStatus within a Coroutine to retrieve a List of Document Status(Valid, Invalid or Suspended)
+            lifecycleScope.launch {
+                val revocationStatus = eudiVerifier.resolveStatus(response)
             }
 
             // structured objects to access display data
