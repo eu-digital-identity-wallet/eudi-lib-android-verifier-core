@@ -17,13 +17,13 @@
 package eu.europa.ec.eudi.verifier.core
 
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.multipaz.mdoc.response.DeviceResponseParser
 
 sealed interface ValidityInfoResult {
 
 }
 
-fun DeviceResponseParser.Document.checkValidityInfo(atTime: Instant = Clock.System.now()): ValidityInfoResult {
-    TODO()
-}
+//fun DeviceResponseParser.Document.checkValidityInfo(atTime: Instant = Clock.System.now()): ValidityInfoResult {
+//
+//}

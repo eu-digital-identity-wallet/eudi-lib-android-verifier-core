@@ -77,8 +77,15 @@ android {
         sourceCompatibility = JavaVersion.toVersion(libs.versions.java.get())
         targetCompatibility = JavaVersion.toVersion(libs.versions.java.get())
     }
+
     kotlinOptions {
         jvmTarget = libs.versions.java.get()
+    }
+
+    kotlin {
+        compilerOptions {
+            freeCompilerArgs.add("-opt-in=kotlin.time.ExperimentalTime")
+        }
     }
 
     testOptions {

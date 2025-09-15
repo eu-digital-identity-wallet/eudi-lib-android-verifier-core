@@ -19,7 +19,7 @@ import eu.europa.ec.eudi.verifier.core.DataElementIdentifier
 import eu.europa.ec.eudi.verifier.core.DocType
 import eu.europa.ec.eudi.verifier.core.Namespace
 import eu.europa.ec.eudi.verifier.core.parse.CborParserUtil
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import org.multipaz.mdoc.response.DeviceResponseParser
 
 
