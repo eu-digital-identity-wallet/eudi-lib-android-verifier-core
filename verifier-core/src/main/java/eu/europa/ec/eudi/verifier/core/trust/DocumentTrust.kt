@@ -16,11 +16,12 @@
 
 package eu.europa.ec.eudi.verifier.core
 
-import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import org.multipaz.crypto.X509Cert
 import org.multipaz.mdoc.response.DeviceResponseParser
 import org.multipaz.trustmanagement.TrustManager
+import org.multipaz.trustmanagement.TrustResult
 
 /**
  * Interface defining document trust verification operations.
@@ -34,12 +35,12 @@ interface DocumentTrust {
      *
      * @param document The document to verify trust for
      * @param atTime The instant at which to verify trust; defaults to the current system time
-     * @return A [TrustManager.TrustResult] indicating the trust status of the document
+     * @return A [TrustResult] indicating the trust status of the document
      */
-    fun isDocumentTrusted(
+    suspend fun isDocumentTrusted(
         document: DeviceResponseParser.Document,
         atTime: Instant = Clock.System.now()
-    ): TrustManager.TrustResult
+    ): TrustResult
 }
 
 /**
@@ -47,12 +48,12 @@ interface DocumentTrust {
  *
  * @param document The document to verify trust for
  * @param atTime The instant at which to verify trust; defaults to the current system time
- * @return A [TrustManager.TrustResult] indicating the trust status of the document
+ * @return A [TrustResult] indicating the trust status of the document
  */
-fun TrustManager.isDocumentTrusted(
+suspend fun TrustManager.isDocumentTrusted(
     document: DeviceResponseParser.Document,
     atTime: Instant = Clock.System.now()
-): TrustManager.TrustResult {
+): TrustResult {
     return verify(document.issuerCertificateChain.certificates, atTime)
 }
 
@@ -89,5 +90,5 @@ data class IssuerInfo(
  *
  * @return An IssuerInfo object containing the extracted issuer information, or null if no issuer information is available
  */
-val TrustManager.TrustResult.issuerInfo: IssuerInfo?
+val TrustResult.issuerInfo: IssuerInfo?
     get() = trustChain?.certificates?.first()?.let { IssuerInfo(it) }
