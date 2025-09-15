@@ -15,6 +15,7 @@
  */
 package eu.europa.ec.eudi.verifier.core.transfer
 
+import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
 import eu.europa.ec.eudi.verifier.core.response.Response
 
 interface Event
@@ -49,7 +50,7 @@ sealed interface TransferEvent : Event {
      * Indicates that a response has been received from the holder device.
      * @param response The response received.
      */
-    data class ResponseReceived(val response: Response) : TransferEvent
+    data class ResponseReceived(val response: DeviceResponse) : TransferEvent
 
     /**
      * Indicates that the connection has been disconnected.
