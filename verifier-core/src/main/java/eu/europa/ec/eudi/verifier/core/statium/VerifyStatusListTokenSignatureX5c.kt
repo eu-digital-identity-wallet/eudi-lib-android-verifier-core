@@ -21,8 +21,8 @@ import com.nimbusds.jose.crypto.ECDSAVerifier
 import com.nimbusds.jose.crypto.RSASSAVerifier
 import com.nimbusds.jwt.SignedJWT
 import eu.europa.ec.eudi.statium.StatusListTokenFormat
-import eu.europa.ec.eudi.statium.VerifyStatusListTokenSignature
-import kotlinx.datetime.Instant
+import eu.europa.ec.eudi.statium.VerifyStatusListTokenJwtSignature
+import kotlin.time.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
 import org.multipaz.cbor.Cbor
@@ -31,6 +31,7 @@ import org.multipaz.crypto.javaX509Certificate
 import org.multipaz.trustmanagement.TrustManager
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
+import kotlin.time.ExperimentalTime
 
 /**
  * Implementation of [VerifyStatusListTokenSignature] that verifies status list token signatures
@@ -45,7 +46,7 @@ import java.security.interfaces.RSAPublicKey
  */
 class VerifyStatusListTokenSignatureX5c(
     val trustManager: TrustManager
-) : VerifyStatusListTokenSignature {
+) : VerifyStatusListTokenJwtSignature {
 
     /**
      * Verifies the signature of a status list token.
@@ -66,16 +67,16 @@ class VerifyStatusListTokenSignatureX5c(
      *         - [IllegalStateException] if the x5c header is missing or for unsupported key types
      *         - [SignatureVerificationError] if signature verification fails or certificate chain is untrusted
      */
+    @OptIn(ExperimentalTime::class)
     override suspend fun invoke(
         statusListToken: String,
-        format: StatusListTokenFormat,
         at: Instant,
     ): Result<Unit> = runCatching {
         // currently only JWT format is supported
         // TODO add support for CWT format
-        require(format == StatusListTokenFormat.JWT) {
-            "Unsupported format: $format"
-        }
+//        require(format == StatusListTokenFormat.JWT) {
+//            "Unsupported format: $format"
+//        }
 
         val signedJwt = SignedJWT.parse(statusListToken)
 

@@ -17,10 +17,11 @@
 package eu.europa.ec.eudi.verifier.core.statium
 
 import eu.europa.ec.eudi.statium.Status
-import eu.europa.ec.eudi.statium.VerifyStatusListTokenSignature
+import eu.europa.ec.eudi.statium.VerifyStatusListTokenJwtSignature
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
 import io.ktor.client.HttpClient
 import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 /**
  * Interface for resolving the status of documentsClaims in a device response.
@@ -54,14 +55,14 @@ interface DocumentStatusResolver {
          * @param allowedClockSkew the allowed clock skew for the verification
          */
         operator fun invoke(
-            verifySignature: VerifyStatusListTokenSignature = VerifyStatusListTokenSignature.Ignore,
-            ktorHttpClientFactory: () -> HttpClient = { HttpClient() },
+            verifySignature: VerifyStatusListTokenJwtSignature,
+            ktorHttpClient: HttpClient = HttpClient(),
             allowedClockSkew: Duration = Duration.ZERO,
         ): DocumentStatusResolver {
             return DocumentStatusResolverImpl(
                 verifySignature,
                 allowedClockSkew,
-                ktorHttpClientFactory
+                ktorHttpClient
             )
         }
 
@@ -87,8 +88,11 @@ interface DocumentStatusResolver {
      */
     class Builder {
 
-        var verifySignature: VerifyStatusListTokenSignature = VerifyStatusListTokenSignature.Ignore
-        var ktorHttpClientFactory: () -> HttpClient = { HttpClient() }
+        @OptIn(ExperimentalTime::class)
+        var verifySignature: VerifyStatusListTokenJwtSignature = VerifyStatusListTokenJwtSignature { _, _ ->
+            Result.success(Unit)
+        }
+        var ktorHttpClient: HttpClient = HttpClient()
         var allowedClockSkew: Duration = Duration.ZERO
 
         /**
@@ -96,7 +100,7 @@ interface DocumentStatusResolver {
          * @param verifySignature a function to verify the status list token signature
          * @return the builder instance
          */
-        fun withVerifySignature(verifySignature: VerifyStatusListTokenSignature) = apply {
+        fun withVerifySignature(verifySignature: VerifyStatusListTokenJwtSignature) = apply {
             this.verifySignature = verifySignature
         }
 
@@ -105,8 +109,8 @@ interface DocumentStatusResolver {
          * @param ktorHttpClientFactory a factory function to create an [HttpClient]
          * @return the builder instance
          */
-        fun withKtorHttpClientFactory(ktorHttpClientFactory: () -> HttpClient) = apply {
-            this.ktorHttpClientFactory = ktorHttpClientFactory
+        fun withKtorHttpClientFactory(ktorHttpClient: HttpClient) = apply {
+            this.ktorHttpClient = ktorHttpClient
         }
 
         /**
@@ -125,7 +129,7 @@ interface DocumentStatusResolver {
             return DocumentStatusResolverImpl(
                 verifySignature,
                 allowedClockSkew,
-                ktorHttpClientFactory,
+                ktorHttpClient,
             )
         }
     }
