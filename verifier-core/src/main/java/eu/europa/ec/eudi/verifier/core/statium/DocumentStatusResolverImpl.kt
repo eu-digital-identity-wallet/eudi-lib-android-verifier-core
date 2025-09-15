@@ -16,6 +16,7 @@
 
 package eu.europa.ec.eudi.verifier.core.statium
 
+import android.util.Log
 import eu.europa.ec.eudi.statium.GetStatus
 import eu.europa.ec.eudi.statium.GetStatusListToken
 import eu.europa.ec.eudi.statium.Status
@@ -62,17 +63,18 @@ class DocumentStatusResolverImpl(
      */
     override suspend fun resolveStatus(response: DeviceResponse): List<Result<Status>> {
         return withContext(Dispatchers.IO) {
-            // Extract the "documentsClaims" field from the CBOR-encoded response
+            // Extract the "documents" field from the CBOR-encoded response
             // This contains an array of document entries in the mDL format
             val documents = Cbor.decode(response.deviceResponseBytes)
-                .asMap[Tstr("documentsClaims")]
-                ?: throw IllegalArgumentException("Invalid device response: missing 'documentsClaims' field")
+                .asMap[Tstr("documents")]
+                ?: throw IllegalArgumentException("Invalid device response: missing 'documents' field")
 
             // Extract issuerAuth bytes from each document
             // The issuerAuth field contains the signed COSE data from the document issuer
             // which includes status reference information
-            val issuerAuthList = documents.asArray.map {
-                it.asMap[Tstr("issuerAuth")]
+            val issuerAuthList = documents.asArray.map { document ->
+                document.asMap[Tstr("issuerSigned")]
+                    ?.asMap?.get(Tstr("issuerAuth"))
                     ?: throw IllegalArgumentException("Invalid device response: missing 'issuerAuth' in document")
             }
 
@@ -84,7 +86,7 @@ class DocumentStatusResolverImpl(
                     val statusReference = statusReferenceFromIssuerAuth(issuerAuth)
 
                     // Create a JWT-based status list token retriever with verification capability
-                    val getStatusListToken = GetStatusListToken.Companion.usingJwt(
+                    val getStatusListToken = GetStatusListToken.usingJwt(
                         clock = Clock.System,
                         httpClientFactory = ktorHttpClientFactory,
                         verifyStatusListTokenSignature = verifySignature,
@@ -94,7 +96,7 @@ class DocumentStatusResolverImpl(
                     // Retrieve and validate the current status using the GetStatus utility
                     // This will fetch the status list token from the reference URI,
                     // verify its signature, and check the status at the specified index
-                    with(GetStatus.Companion(getStatusListToken)) {
+                    with(GetStatus(getStatusListToken)) {
                         statusReference.currentStatus().getOrThrow()
                     }
                 }
@@ -115,12 +117,15 @@ class DocumentStatusResolverImpl(
      * @throws IllegalArgumentException if required status information is missing
      */
     private fun statusReferenceFromIssuerAuth(issuerAuth: DataItem): StatusReference {
-        val coseSign1 = CoseSign1.Companion.fromDataItem(issuerAuth)
+        val coseSign1 = CoseSign1.fromDataItem(issuerAuth)
         val payload = coseSign1.payload
         requireNotNull(payload) {
             "Missing payload in COSE_Sign1 structure"
         }
-        val mso = Cbor.decode(Cbor.decode(payload).asBstr)
+
+        val mso = Cbor.decode(Cbor.decode(payload).asTagged.asBstr)
+
+//        Log.d("After Decode Payload", "$mso")
 
         val statusList = mso[TokenStatusListSpec.STATUS][TokenStatusListSpec.STATUS_LIST].asMap
         val uri = statusList[Tstr(TokenStatusListSpec.URI)]?.asTstr
