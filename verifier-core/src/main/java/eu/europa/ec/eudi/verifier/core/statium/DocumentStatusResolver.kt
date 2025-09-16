@@ -21,7 +21,6 @@ import eu.europa.ec.eudi.statium.VerifyStatusListTokenJwtSignature
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
 import io.ktor.client.HttpClient
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 /**
  * Interface for resolving the status of documentsClaims in a device response.
@@ -88,7 +87,6 @@ interface DocumentStatusResolver {
      */
     class Builder {
 
-        @OptIn(ExperimentalTime::class)
         var verifySignature: VerifyStatusListTokenJwtSignature = VerifyStatusListTokenJwtSignature { _, _ ->
             Result.success(Unit)
         }
