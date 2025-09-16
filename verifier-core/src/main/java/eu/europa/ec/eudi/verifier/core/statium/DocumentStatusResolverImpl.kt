@@ -33,7 +33,6 @@ import org.multipaz.cbor.DataItem
 import org.multipaz.cbor.Tstr
 import org.multipaz.cose.CoseSign1
 import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 /**
  * Default implementation of [DocumentStatusResolver] that validates document status
@@ -61,7 +60,6 @@ class DocumentStatusResolverImpl(
      * @param response The device response containing CBOR-encoded document data
      * @return A list of [Result] objects with the resolved status of each document
      */
-    @OptIn(ExperimentalTime::class)
     override suspend fun resolveStatus(response: DeviceResponse): List<Result<Status>> {
         return withContext(Dispatchers.IO) {
             // Extract the "documents" field from the CBOR-encoded response
