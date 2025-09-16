@@ -31,7 +31,6 @@ import org.multipaz.crypto.javaX509Certificate
 import org.multipaz.trustmanagement.TrustManager
 import java.security.interfaces.ECPublicKey
 import java.security.interfaces.RSAPublicKey
-import kotlin.time.ExperimentalTime
 
 /**
  * Implementation of [VerifyStatusListTokenSignature] that verifies status list token signatures
@@ -67,7 +66,6 @@ class VerifyStatusListTokenSignatureX5c(
      *         - [IllegalStateException] if the x5c header is missing or for unsupported key types
      *         - [SignatureVerificationError] if signature verification fails or certificate chain is untrusted
      */
-    @OptIn(ExperimentalTime::class)
     override suspend fun invoke(
         statusListToken: String,
         at: Instant,
