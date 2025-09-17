@@ -17,15 +17,24 @@ package eu.europa.ec.eudi.verifier.core
 
 import android.content.Context
 import androidx.annotation.RawRes
+import eu.europa.ec.eudi.verifier.core.internal.LogPrinterImpl
+import eu.europa.ec.eudi.verifier.core.logging.Logger
 import eu.europa.ec.eudi.verifier.core.statium.DocumentStatusResolver
+import eu.europa.ec.eudi.verifier.core.statium.VerifyStatusListTokenSignatureX5c
 import eu.europa.ec.eudi.verifier.core.transfer.TransferManagerFactory
-import eu.europa.ec.eudi.wallet.statium.VerifyStatusListTokenSignatureX5c
-import kotlinx.datetime.Instant
-import org.multipaz.mdoc.response.DeviceResponseParser
-import org.multipaz.trustmanagement.TrustManager
-import org.multipaz.trustmanagement.TrustPoint
-import java.security.cert.X509Certificate
+import eu.europa.ec.eudi.verifier.core.trust.DocumentTrust
+import eu.europa.ec.eudi.verifier.core.trust.isDocumentTrusted
+import kotlinx.coroutines.runBlocking
 import org.multipaz.crypto.X509Cert
+import org.multipaz.mdoc.response.DeviceResponseParser
+import org.multipaz.storage.ephemeral.EphemeralStorage
+import org.multipaz.trustmanagement.TrustManager
+import org.multipaz.trustmanagement.TrustManagerLocal
+import org.multipaz.trustmanagement.TrustMetadata
+import org.multipaz.trustmanagement.TrustResult
+import java.security.cert.X509Certificate
+import kotlin.time.Instant
+import org.multipaz.util.Logger as MultipazLogger
 
 /**
  * Main entry point for the EUDI verifier API, combining transfer management and document status resolution.
@@ -36,6 +45,9 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
 
     /** Configuration settings for the verifier. */
     val config: EudiVerifierConfig
+
+    /** Custom Logger implementation. */
+    val logger: Logger
 
     /** Manager responsible for trust verification of documentsClaims. */
     val trustManager: TrustManager
@@ -48,10 +60,10 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
      * @param atTime The instant at which to verify trust
      * @return A [TrustManager.TrustResult] indicating the trust status of the document
      */
-    override fun isDocumentTrusted(
+    override suspend fun isDocumentTrusted(
         document: DeviceResponseParser.Document,
         atTime: Instant
-    ): TrustManager.TrustResult {
+    ): TrustResult {
         return trustManager.isDocumentTrusted(document, atTime)
     }
 
@@ -89,7 +101,9 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
         private val config: EudiVerifierConfig,
     ) {
 
-        private var trustPoints: List<TrustPoint> = emptyList()
+        var logger: Logger? = null
+
+        private var certificates: List<X509Certificate> = emptyList()
 
         private var documentStatusResolver: DocumentStatusResolver? = null
 
@@ -98,16 +112,25 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
          * as raw resource IDs from the app.
          */
         fun trustedCertificates(@RawRes vararg certificateRawIds: Int) {
-            val certificates = CertificateProvider.loadCertificates(context, certificateRawIds.toList())
-            trustPoints = certificates.map { TrustPoint(X509Cert(it.encoded)) }
+            certificates = CertificateProvider.loadCertificates(context, certificateRawIds.toList())
         }
 
         /**
          * Configures the verifier to trust a pre-loaded list of X509Certificates.
          */
-        fun trustedCertificates(certificates: List<X509Certificate>) {
-            trustPoints = certificates.map { TrustPoint(X509Cert(it.encoded)) }
+        fun trustedCertificates(certificatesProvided: List<X509Certificate>) {
+            certificates = certificatesProvided
         }
+
+        /**
+         * Configure with the given [Logger] to use for logging. If not set, the default logger will be used
+         * which is configured with the [EudiVerifierConfig.configureLogging].
+         *
+         * @param logger the logger
+         * @return this [Builder] instance
+         */
+        fun withLogger(logger: Logger) = apply { this.logger = logger }
+
 
         fun withDocumentStatusResolver(documentStatusResolver: DocumentStatusResolver) = apply {
             this.documentStatusResolver = documentStatusResolver
@@ -119,9 +142,27 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
          * @return A new [EudiVerifier] ready for use.
          */
         fun build(): EudiVerifier {
-            val trustManager = TrustManager()
-            for (trustPoint in config.trustPoints) {
-                trustManager.addTrustPoint(trustPoint)
+
+            val loggerToUse = (this@Builder.logger ?: Logger(config)).also {
+                MultipazLogger.logPrinter = LogPrinterImpl(it)
+            }
+
+            val trustManager = TrustManagerLocal(
+                storage = EphemeralStorage(),
+                identifier = "EudiVerifier",
+            ).apply {
+                certificates.forEach { cert ->
+                    val customCert = X509Cert(cert.encoded)
+                    runBlocking {
+                        addX509Cert(
+                            certificate = customCert,
+                            metadata = TrustMetadata(
+                                displayName = customCert.subject.components["CN"]?.value
+                                    ?: customCert.subject.name
+                            )
+                        )
+                    }
+                }
             }
             val verifyStatusListTokenSignature = VerifyStatusListTokenSignatureX5c(trustManager)
             val documentStatusResolverToUse = documentStatusResolver ?: DocumentStatusResolver {
@@ -131,6 +172,7 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
             return EudiVerifierImpl(
                 context = context,
                 config = config,
+                logger = loggerToUse,
                 documentStatusResolver = documentStatusResolverToUse,
                 trustManager = trustManager
             )
