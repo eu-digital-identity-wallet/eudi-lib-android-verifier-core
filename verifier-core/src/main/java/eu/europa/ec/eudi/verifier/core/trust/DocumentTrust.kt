@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package eu.europa.ec.eudi.verifier.core
+package eu.europa.ec.eudi.verifier.core.trust
 
 import kotlin.time.Clock
 import kotlin.time.Instant

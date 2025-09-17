@@ -15,6 +15,7 @@
  */
 package eu.europa.ec.eudi.verifier.core
 
+import eu.europa.ec.eudi.verifier.core.logging.Logger
 import org.multipaz.trustmanagement.TrustPoint
 
 /**
@@ -46,6 +47,28 @@ class EudiVerifierConfig {
      */
     fun trustPoints(trustPoints: List<TrustPoint>) {
         this@EudiVerifierConfig.trustPoints = trustPoints
+    }
+
+    @Logger.Level
+    var logLevel: Int = Logger.LEVEL_INFO
+        private set
+    var logSizeLimit: Int = 1000
+        private set
+
+    /**
+     * Configure the built-in logging. This allows to configure the log level and the log size limit.
+     *
+     * The default log level is set to [Logger.LEVEL_INFO] and the default log size limit is set to
+     * 1000.
+     *
+     * @param level the log level
+     * @param sizeLimit the log size limit
+     * @return the [EudiVerifierConfig] instance
+     */
+    @JvmOverloads
+    fun configureLogging(level: Int, sizeLimit: Int? = null) = apply {
+        logLevel = level
+        sizeLimit?.let { logSizeLimit = it }
     }
 
     companion object {

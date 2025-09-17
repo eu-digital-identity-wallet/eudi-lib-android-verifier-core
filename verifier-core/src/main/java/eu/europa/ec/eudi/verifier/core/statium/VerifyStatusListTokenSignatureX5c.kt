@@ -14,18 +14,15 @@
  * limitations under the License.
  */
 
-package eu.europa.ec.eudi.wallet.statium
+package eu.europa.ec.eudi.verifier.core.statium
 
-import android.util.Log
 import com.nimbusds.jose.crypto.ECDSAVerifier
 import com.nimbusds.jose.crypto.RSASSAVerifier
 import com.nimbusds.jwt.SignedJWT
-import eu.europa.ec.eudi.statium.StatusListTokenFormat
 import eu.europa.ec.eudi.statium.VerifyStatusListTokenJwtSignature
 import kotlin.time.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
-import org.multipaz.cbor.Cbor
 import org.multipaz.crypto.X509CertChain
 import org.multipaz.crypto.javaX509Certificate
 import org.multipaz.trustmanagement.TrustManager
