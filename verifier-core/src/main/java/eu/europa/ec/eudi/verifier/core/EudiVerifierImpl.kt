@@ -16,6 +16,7 @@
 package eu.europa.ec.eudi.verifier.core
 
 import android.content.Context
+import eu.europa.ec.eudi.verifier.core.logging.Logger
 import eu.europa.ec.eudi.verifier.core.statium.DocumentStatusResolver
 import eu.europa.ec.eudi.verifier.core.transfer.TransferManagerFactory
 import eu.europa.ec.eudi.verifier.core.transfer.TransferManagerFactoryImpl
@@ -24,6 +25,7 @@ import org.multipaz.trustmanagement.TrustManager
 class EudiVerifierImpl internal constructor(
     context: Context,
     override val config: EudiVerifierConfig,
+    override val logger: Logger,
     val documentStatusResolver: DocumentStatusResolver,
     override val trustManager: TrustManager
 ) : EudiVerifier, TransferManagerFactory by TransferManagerFactoryImpl(context),
