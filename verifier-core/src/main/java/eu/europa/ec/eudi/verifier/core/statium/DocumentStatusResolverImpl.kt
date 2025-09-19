@@ -124,8 +124,6 @@ class DocumentStatusResolverImpl(
 
         val mso = Cbor.decode(Cbor.decode(payload).asTagged.asBstr)
 
-//        Log.d("After Decode Payload", "$mso")
-
         val statusList = mso[TokenStatusListSpec.STATUS][TokenStatusListSpec.STATUS_LIST].asMap
         val uri = statusList[Tstr(TokenStatusListSpec.URI)]?.asTstr
             ?: throw IllegalArgumentException("Missing URI in status list")

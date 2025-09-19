@@ -20,6 +20,9 @@ import com.nimbusds.jose.crypto.ECDSAVerifier
 import com.nimbusds.jose.crypto.RSASSAVerifier
 import com.nimbusds.jwt.SignedJWT
 import eu.europa.ec.eudi.statium.VerifyStatusListTokenJwtSignature
+import eu.europa.ec.eudi.verifier.core.logging.Logger
+import eu.europa.ec.eudi.verifier.core.logging.d
+import eu.europa.ec.eudi.verifier.core.logging.e
 import kotlin.time.Instant
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
@@ -41,7 +44,8 @@ import java.security.interfaces.RSAPublicKey
  * @property trustManager The trust manager used to validate certificate chains.
  */
 class VerifyStatusListTokenSignatureX5c(
-    val trustManager: TrustManager
+    val trustManager: TrustManager,
+    var logger: Logger? = null,
 ) : VerifyStatusListTokenJwtSignature {
 
     /**
@@ -68,10 +72,12 @@ class VerifyStatusListTokenSignatureX5c(
         at: Instant,
     ): Result<Unit> = runCatching {
         // currently only JWT format is supported
-        // TODO add support for CWT format
+        // Add support for CWT format
 //        require(format == StatusListTokenFormat.JWT) {
 //            "Unsupported format: $format"
 //        }
+
+        logger?.d(TAG, "Verifying using JWT")
 
         val signedJwt = SignedJWT.parse(statusListToken)
 
@@ -81,30 +87,43 @@ class VerifyStatusListTokenSignatureX5c(
             ?.let { X509CertChain.fromX5c(it) }
 
         val publicKey = chain?.certificates?.firstOrNull()?.javaX509Certificate?.publicKey
-            ?: throw IllegalStateException("Missing x5c in JWT header")
+            ?: run {
+                val exception = IllegalStateException("Missing x5c in JWT header")
+                logger?.e(TAG, "Missing x5c in JWT header", exception)
+                throw exception
+            }
 
         val verifier = when (publicKey) {
             is ECPublicKey -> ECDSAVerifier(publicKey)
             is RSAPublicKey -> RSASSAVerifier(publicKey)
-            else -> throw IllegalStateException(
-                "Unsupported public key type: ${publicKey.javaClass.name}"
-            )
+            else -> {
+                val exception = IllegalStateException("Unsupported public key type: ${publicKey.javaClass.name}")
+                logger?.e(TAG, "Unsupported public key type", exception)
+                throw exception
+            }
         }
 
         val isVerified = signedJwt.verify(verifier)
 
         if (!isVerified) {
+            logger?.e(TAG, "Verification failed", SignatureVerificationError())
             throw SignatureVerificationError()
         }
 
         val result = trustManager.verify(chain.certificates)
         if (!result.isTrusted) {
+            logger?.e(TAG, "Document is Not Trusted", SignatureVerificationError())
             throw SignatureVerificationError()
         }
 
         if (result.error != null) {
+            logger?.e(TAG, "There was an error ", IllegalStateException(result.error))
             throw IllegalStateException(result.error)
         }
+    }
+
+    companion object {
+        private const val TAG = "StatusListSignature"
     }
 }
 
