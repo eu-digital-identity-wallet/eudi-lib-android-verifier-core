@@ -26,6 +26,9 @@ The library consists of the following main components:
 - DocumentStatusResolver
     - Interface for resolving the status of documentsClaims in a device response.
     - The status resolver performs validation against status list services to determine if documentsClaims are valid, invalid or suspended.
+- Logger
+    - Logger interface for the EudiVerifier with customizable Logging-Level
+    - Implementors can provide their own logging mechanism by implementing this interface
 
 ## Disclaimer
 
@@ -106,13 +109,24 @@ verifier.
 // Configuring the verifier
 lateinit var context: Context
 // An instance of EudiVerifier is built through the invoke operator
-val eudiVerifier = EudiVerifier(context) {
+val eudiVerifier = EudiVerifier(
+    context,
+    EudiVerifierConfig {
+        // Optional configuration of logging level, defaults to LEVEL_INFO
+        configureLogging(level = Logger.LEVEL_DEBUG)
+    }
+) {
     // certificates of trusted issuers
     trustedCertificates(
         R.raw.apple_iaca,
         R.raw.credenceid_mdl_iaca_root,
         R.raw.google_mdl_iaca_cert
     )
+
+    // Optional custom Logger
+    withLogger { record: Logger.Record ->
+        // provide your implementation of log()
+    }
 }
 ```
 
@@ -194,16 +208,26 @@ document.
 // Configuring the verifier
 
 lateinit var context: Context
-// certificates of trusted issuers
 
 // An instance of EudiVerifier is built through the invoke operator
-// Calling trustedCertificates configuration function is mandatory, not calling it causes a compile error 
-eudiVerifier = EudiVerifier(context) {
+val eudiVerifier = EudiVerifier(
+    context,
+    EudiVerifierConfig {
+        // Optional configuration of logging level, defaults to LEVEL_INFO
+        configureLogging(level = Logger.LEVEL_DEBUG)
+    }
+) {
+    // certificates of trusted issuers
     trustedCertificates(
         R.raw.apple_iaca,
         R.raw.credenceid_mdl_iaca_root,
         R.raw.google_mdl_iaca_cert
     )
+
+    // Optional custom Logger
+    withLogger { record: Logger.Record ->
+        // provide your implementation of log()
+    }
 }
 
 // create transfer manager

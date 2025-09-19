@@ -17,6 +17,7 @@
 package eu.europa.ec.eudi.verifier.core.transfer
 
 import android.content.Context
+import eu.europa.ec.eudi.verifier.core.logging.Logger
 
 /**
  * Factory interface for creating instances of [TransferManager].
@@ -46,7 +47,7 @@ interface TransferManagerFactory {
  *
  * @property context The Android application context.
  */
-class TransferManagerFactoryImpl(context: Context) : TransferManagerFactory {
+class TransferManagerFactoryImpl(context: Context, private val logger: Logger) : TransferManagerFactory {
     private val context = context.applicationContext
 
     /**
@@ -56,7 +57,7 @@ class TransferManagerFactoryImpl(context: Context) : TransferManagerFactory {
      * @return A new instance of [TransferManagerImpl].
      */
     override fun createTransferManager(config: TransferConfig): TransferManager {
-        return TransferManagerImpl(context, config)
+        return TransferManagerImpl(context, config, logger)
     }
 
     /**
@@ -66,7 +67,6 @@ class TransferManagerFactoryImpl(context: Context) : TransferManagerFactory {
      * @return A new instance of [TransferManagerImpl].
      */
     override fun createTransferManager(configure: TransferConfig.Builder.() -> Unit): TransferManager {
-        return TransferManagerImpl(context, TransferConfig(configure))
+        return TransferManagerImpl(context, TransferConfig(configure), logger)
     }
-
 }

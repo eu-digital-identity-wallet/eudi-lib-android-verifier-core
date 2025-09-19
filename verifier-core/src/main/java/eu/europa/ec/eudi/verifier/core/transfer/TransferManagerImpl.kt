@@ -22,19 +22,25 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 import com.android.identity.android.mdoc.deviceretrieval.VerificationHelper
 import com.android.identity.android.mdoc.transport.DataTransportOptions
+import eu.europa.ec.eudi.verifier.core.logging.Logger
+import eu.europa.ec.eudi.verifier.core.logging.d
+import eu.europa.ec.eudi.verifier.core.logging.e
 import eu.europa.ec.eudi.verifier.core.request.DeviceRequest
 import eu.europa.ec.eudi.verifier.core.request.Request
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
+import org.multipaz.cbor.Cbor
 import org.multipaz.crypto.Algorithm
 import org.multipaz.mdoc.connectionmethod.MdocConnectionMethod
 import org.multipaz.mdoc.request.DeviceRequestGenerator
 import org.multipaz.mdoc.response.DeviceResponseParser
 import org.multipaz.mdoc.role.MdocRole
+import org.multipaz.util.toBase64
 import java.util.concurrent.Executor
 
 class TransferManagerImpl(
     private val context: Context,
     private val config: TransferConfig,
+    var logger: Logger? = null,
 ) : TransferManager {
 
     private var transferEventListener : TransferEvent.Listener? = null
@@ -44,15 +50,17 @@ class TransferManagerImpl(
     private val responseListener = object : VerificationHelper.Listener {
 
         override fun onDeviceConnected() {
+            logger?.d(TAG, "Connection Established")
             transferEventListener?.onEvent(TransferEvent.Connected)
         }
 
         override fun onDeviceDisconnected(transportSpecificTermination: Boolean) {
+            logger?.d(TAG, "Device Disconnected")
             transferEventListener?.onEvent(TransferEvent.Disconnected)
-            //TODO maybe we need to cleanup
         }
 
         override fun onDeviceEngagementReceived(connectionMethods: List<MdocConnectionMethod>) {
+            logger?.d(TAG, "Device Engagement Received")
 
             transferEventListener?.onEvent(TransferEvent.Connecting)
 
@@ -64,38 +72,42 @@ class TransferManagerImpl(
             if (availableMdocConnectionMethods.isNotEmpty()) {
                 verificationHelper?.connect(availableMdocConnectionMethods.first())
             } else {
-                // not sure when this happens or how to handle it
-                throw IllegalStateException("No mdoc connection method selected.")
+                logger?.e(TAG, "No mdoc connection method selected")
+                throw IllegalStateException("No mdoc connection method selected")
             }
         }
 
-
         override fun onError(error: Throwable) {
+            logger?.e(TAG, "Error: ${error.message}", error)
             transferEventListener?.onEvent(TransferEvent.Error(error))
             stopSession()
         }
 
         override fun onMoveIntoNfcField() {
-            TODO("Not yet implemented")
+            logger?.d(TAG, "Not implemented yet")
         }
 
         override fun onReaderEngagementReady(readerEngagement: ByteArray) {
-            TODO("Not yet implemented")
+            logger?.d(TAG, "Not implemented yet")
         }
 
         override fun onResponseReceived(deviceResponseBytes: ByteArray) {
+
             verificationHelper?.let { verification ->
                 val parser = DeviceResponseParser(deviceResponseBytes, verification.sessionTranscript)
                 parser.setEphemeralReaderKey(verification.eReaderKey)
-                transferEventListener?.onEvent(
-                    TransferEvent.ResponseReceived(
-                        DeviceResponse(
-                            parser.parse(),
-                            deviceResponseBytes
-                        )
-                    )
+
+                val deviceResponse = DeviceResponse(
+                    parser.parse(),
+                    deviceResponseBytes
                 )
-            } ?: throw IllegalStateException("Verification is null")
+
+                logger?.d(TAG, "ResponseReceived ${Cbor.toDiagnostics(deviceResponseBytes)}")
+
+                transferEventListener?.onEvent(
+                    TransferEvent.ResponseReceived(deviceResponse)
+                )
+            }
 
             stopSession()
         }
@@ -118,6 +130,7 @@ class TransferManagerImpl(
     }
 
     override fun startQRDeviceEngagement(qrCode: String) {
+        logger?.d(TAG, "QR Engagement Request: $qrCode")
         verificationHelper = VerificationHelper.Builder(
             context,
             responseListener,
@@ -137,14 +150,15 @@ class TransferManagerImpl(
     }
 
     override fun enableNFCDeviceEngagement(nfcAdapter: NfcAdapter, activity: Activity) {
-        TODO("Not yet implemented")
+        logger?.d(TAG, "Not implemented yet")
     }
 
     override fun disableNFCDeviceEngagement() {
-        TODO("Not yet implemented")
+        logger?.d(TAG, "Not implemented yet")
     }
 
     override fun sendRequest(request: Request) {
+        logger?.d(TAG, "About to send Document Request")
         // Use DeviceRequestGenerator to generate a DeviceRequest bytes
         // then send it using verificationHelper.sendRequest()
         if (request is DeviceRequest) {
@@ -161,15 +175,18 @@ class TransferManagerImpl(
                         )
                     }
                 }
+                // Log requestGenerator.generate()
                 verification.sendRequest(requestGenerator.generate())
                 transferEventListener?.onEvent(TransferEvent.RequestSent)
             }
         } else {
+            logger?.e(TAG, "Unsupported request type")
             throw IllegalArgumentException("Unsupported request type: ${request::class.simpleName}")
         }
     }
 
     override fun stopSession() {
+        logger?.d(TAG, "Terminating current session")
         verificationHelper?.disconnect()
         verificationHelper = null
         transferEventListener = null
@@ -181,5 +198,9 @@ class TransferManagerImpl(
         } else {
             ContextCompat.getMainExecutor(context)
         }
+    }
+    companion object {
+        private const val TAG = "TransferManager"
+        private const val RESPONSE = "response"
     }
 }
