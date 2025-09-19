@@ -16,38 +16,11 @@
 package eu.europa.ec.eudi.verifier.core
 
 import eu.europa.ec.eudi.verifier.core.logging.Logger
-import org.multipaz.trustmanagement.TrustPoint
 
 /**
  * Configuration for the EUDI verifier.
- *
- * @property trustPoints List of trust points representing trusted points used during verification.
  */
 class EudiVerifierConfig {
-
-    /**
-     * List of trust points representing the trusted points used during verification.
-     */
-    var trustPoints: List<TrustPoint> = emptyList()
-        private set
-
-    /**
-     * Sets the list of trusted points using a vararg of [TrustPoint].
-     *
-     * @param trustPoints Vararg of trust points to set as trusted points.
-     */
-    fun trustPoints(vararg trustPoints: TrustPoint) {
-        this@EudiVerifierConfig.trustPoints = trustPoints.toList()
-    }
-
-    /**
-     * Sets the list of trusted points.
-     *
-     * @param trustPoints List of trust points to set as trusted points.
-     */
-    fun trustPoints(trustPoints: List<TrustPoint>) {
-        this@EudiVerifierConfig.trustPoints = trustPoints
-    }
 
     @Logger.Level
     var logLevel: Int = Logger.LEVEL_INFO

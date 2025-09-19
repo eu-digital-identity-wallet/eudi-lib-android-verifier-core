@@ -28,5 +28,5 @@ class EudiVerifierImpl internal constructor(
     override val logger: Logger,
     val documentStatusResolver: DocumentStatusResolver,
     override val trustManager: TrustManager
-) : EudiVerifier, TransferManagerFactory by TransferManagerFactoryImpl(context),
+) : EudiVerifier, TransferManagerFactory by TransferManagerFactoryImpl(context, logger),
     DocumentStatusResolver by documentStatusResolver
