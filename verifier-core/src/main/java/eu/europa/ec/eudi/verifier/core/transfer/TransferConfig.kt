@@ -17,6 +17,7 @@
 package eu.europa.ec.eudi.verifier.core.transfer
 
 import org.multipaz.mdoc.connectionmethod.MdocConnectionMethod
+import org.multipaz.mdoc.connectionmethod.MdocConnectionMethodBle
 
 /**
  * Configuration for the transfer process between verifier and holder devices.
@@ -102,12 +103,33 @@ class TransferConfig private constructor(
 
         /**
          * Builds a [TransferConfig] instance with the current configuration.
-         *
          * @return A new [TransferConfig] instance.
-         * @throws IllegalStateException if no engagement methods are configured.
+         * @throws IllegalStateException if no engagement methods are configured,
+         * or if a BLE connection is configured incorrectly (e.g., no supported modes or missing UUIDs)
          */
         fun build(): TransferConfig {
             check(engagementMethods.isNotEmpty()) { "No engagement methods configured" }
+
+            engagementMethods.values.flatten().forEach { connectionMethod ->
+                if (connectionMethod is MdocConnectionMethodBle) {
+                    check(connectionMethod.supportsPeripheralServerMode || connectionMethod.supportsCentralClientMode) {
+                        "For BLE connections, at least one mode (Peripheral Server or Central Client) must be supported."
+                    }
+
+                    if (connectionMethod.supportsPeripheralServerMode) {
+                        check(connectionMethod.peripheralServerModeUuid != null) {
+                            "peripheralServerModeUuid must be provided when supportsPeripheralServerMode is true."
+                        }
+                    }
+
+                    if (connectionMethod.supportsCentralClientMode) {
+                        check(connectionMethod.centralClientModeUuid != null) {
+                            "centralClientModeUuid must be provided when supportsCentralClientMode is true."
+                        }
+                    }
+                }
+            }
+
             return TransferConfig(
                 engagementMethods.toMap(),
                 bleUseL2CAP = bleUseL2CAP,
