@@ -3,7 +3,7 @@
 # TransferManagerFactoryImpl
 
 [androidJvm]\
-class [TransferManagerFactoryImpl](index.md)(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html)) : [TransferManagerFactory](../-transfer-manager-factory/index.md)
+class [TransferManagerFactoryImpl](index.md)(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html), logger: [Logger](../../eu.europa.ec.eudi.verifier.core.logging/-logger/index.md)) : [TransferManagerFactory](../-transfer-manager-factory/index.md)
 
 Implementation of [TransferManagerFactory](../-transfer-manager-factory/index.md) that creates [TransferManagerImpl](../-transfer-manager-impl/index.md) instances.
 
@@ -11,7 +11,7 @@ Implementation of [TransferManagerFactory](../-transfer-manager-factory/index.md
 
 | | |
 |---|---|
-| [TransferManagerFactoryImpl](-transfer-manager-factory-impl.md) | [androidJvm]<br>constructor(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html)) |
+| [TransferManagerFactoryImpl](-transfer-manager-factory-impl.md) | [androidJvm]<br>constructor(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html), logger: [Logger](../../eu.europa.ec.eudi.verifier.core.logging/-logger/index.md)) |
 
 ## Functions
 

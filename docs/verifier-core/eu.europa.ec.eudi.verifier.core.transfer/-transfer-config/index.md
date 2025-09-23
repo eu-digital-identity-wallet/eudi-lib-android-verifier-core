@@ -19,4 +19,6 @@ Configuration for the transfer process between verifier and holder devices. Defi
 
 | Name | Summary |
 |---|---|
+| [bleClearCache](ble-clear-cache.md) | [androidJvm]<br>val [bleClearCache](ble-clear-cache.md): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html) |
+| [bleUseL2CAP](ble-use-l2-c-a-p.md) | [androidJvm]<br>val [bleUseL2CAP](ble-use-l2-c-a-p.md): [Boolean](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-boolean/index.html) |
 | [engagementMethods](engagement-methods.md) | [androidJvm]<br>val [engagementMethods](engagement-methods.md): [Map](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-map/index.html)&lt;[TransferConfig.EngagementMethod](-engagement-method/index.md), [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html)&lt;MdocConnectionMethod&gt;&gt;<br>Map of engagement methods to their supported connection methods. |

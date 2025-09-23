@@ -3,7 +3,7 @@
 # invoke
 
 [androidJvm]\
-operator fun [invoke](invoke.md)(verifySignature: VerifyStatusListTokenSignature = VerifyStatusListTokenSignature.Ignore, ktorHttpClientFactory: () -&gt; HttpClient = { HttpClient() }, allowedClockSkew: [Duration](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-duration/index.html) = Duration.ZERO): [DocumentStatusResolver](../index.md)
+operator fun [invoke](invoke.md)(verifySignature: VerifyStatusListTokenJwtSignature, ktorHttpClient: HttpClient = HttpClient(), allowedClockSkew: [Duration](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-duration/index.html) = Duration.ZERO): [DocumentStatusResolver](../index.md)
 
 Creates an instance of [DocumentStatusResolver](../index.md)
 

@@ -2,7 +2,7 @@
 
 # EudiVerifier
 
-interface [EudiVerifier](index.md) : [TransferManagerFactory](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager-factory/index.md), [DocumentStatusResolver](../../eu.europa.ec.eudi.verifier.core.statium/-document-status-resolver/index.md), [DocumentTrust](../-document-trust/index.md)
+interface [EudiVerifier](index.md) : [TransferManagerFactory](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager-factory/index.md), [DocumentStatusResolver](../../eu.europa.ec.eudi.verifier.core.statium/-document-status-resolver/index.md), [DocumentTrust](../../eu.europa.ec.eudi.verifier.core.trust/-document-trust/index.md)
 
 Main entry point for the EUDI verifier API, combining transfer management and document status resolution.
 
@@ -26,6 +26,7 @@ Provides methods to verify device responses and manage transfer events.
 | Name | Summary |
 |---|---|
 | [config](config.md) | [androidJvm]<br>abstract val [config](config.md): [EudiVerifierConfig](../-eudi-verifier-config/index.md)<br>Configuration settings for the verifier. |
+| [logger](logger.md) | [androidJvm]<br>abstract val [logger](logger.md): [Logger](../../eu.europa.ec.eudi.verifier.core.logging/-logger/index.md)<br>Custom Logger implementation. |
 | [trustManager](trust-manager.md) | [androidJvm]<br>abstract val [trustManager](trust-manager.md): TrustManager<br>Manager responsible for trust verification of documentsClaims. |
 
 ## Functions
@@ -33,5 +34,5 @@ Provides methods to verify device responses and manage transfer events.
 | Name | Summary |
 |---|---|
 | [createTransferManager](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager-factory/create-transfer-manager.md) | [androidJvm]<br>abstract fun [createTransferManager](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager-factory/create-transfer-manager.md)(config: [TransferConfig](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-config/index.md)): [TransferManager](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager/index.md)<br>Creates a new [TransferManager](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager/index.md) instance with the specified configuration.<br>[androidJvm]<br>abstract fun [createTransferManager](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager-factory/create-transfer-manager.md)(configure: [TransferConfig.Builder](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-config/-builder/index.md).() -&gt; [Unit](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-unit/index.html)): [TransferManager](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager/index.md)<br>Creates a new [TransferManager](../../eu.europa.ec.eudi.verifier.core.transfer/-transfer-manager/index.md) instance using a configuration lambda. |
-| [isDocumentTrusted](is-document-trusted.md) | [androidJvm]<br>open override fun [isDocumentTrusted](is-document-trusted.md)(document: DeviceResponseParser.Document, atTime: Instant): TrustManager.TrustResult<br>Implementation of [DocumentTrust.isDocumentTrusted](../-document-trust/is-document-trusted.md) that delegates verification to the verifier's [trustManager](trust-manager.md). |
+| [isDocumentTrusted](is-document-trusted.md) | [androidJvm]<br>open suspend override fun [isDocumentTrusted](is-document-trusted.md)(document: DeviceResponseParser.Document, atTime: [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html)): TrustResult<br>Implementation of [DocumentTrust.isDocumentTrusted](../../eu.europa.ec.eudi.verifier.core.trust/-document-trust/is-document-trusted.md) that delegates verification to the verifier's [trustManager](trust-manager.md). |
 | [resolveStatus](../../eu.europa.ec.eudi.verifier.core.statium/-document-status-resolver/resolve-status.md) | [androidJvm]<br>abstract suspend fun [resolveStatus](../../eu.europa.ec.eudi.verifier.core.statium/-document-status-resolver/resolve-status.md)(response: [DeviceResponse](../../eu.europa.ec.eudi.verifier.core.response/-device-response/index.md)): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html)&lt;[Result](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-result/index.html)&lt;Status&gt;&gt;<br>Resolves the status of all documentsClaims in the given device response. |

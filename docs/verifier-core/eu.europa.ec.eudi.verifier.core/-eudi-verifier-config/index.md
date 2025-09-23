@@ -23,10 +23,11 @@ Configuration for the EUDI verifier.
 
 | Name | Summary |
 |---|---|
-| [trustPoints](trust-points.md) | [androidJvm]<br>var [trustPoints](trust-points.md): [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html)&lt;TrustPoint&gt;<br>List of trust points representing the trusted points used during verification. |
+| [logLevel](log-level.md) | [androidJvm]<br>var [logLevel](log-level.md): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html) |
+| [logSizeLimit](log-size-limit.md) | [androidJvm]<br>var [logSizeLimit](log-size-limit.md): [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html) |
 
 ## Functions
 
 | Name | Summary |
 |---|---|
-| [trustPoints](trust-points.md) | [androidJvm]<br>fun [trustPoints](trust-points.md)(vararg trustPoints: TrustPoint)<br>Sets the list of trusted points using a vararg of TrustPoint.<br>[androidJvm]<br>fun [trustPoints](trust-points.md)(trustPoints: [List](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.collections/-list/index.html)&lt;TrustPoint&gt;)<br>Sets the list of trusted points. |
+| [configureLogging](configure-logging.md) | [androidJvm]<br>@[JvmOverloads](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.jvm/-jvm-overloads/index.html)<br>fun [configureLogging](configure-logging.md)(level: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html), sizeLimit: [Int](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-int/index.html)? = null): &lt;Error class: unknown class&gt;<br>Configure the built-in logging. This allows to configure the log level and the log size limit. |

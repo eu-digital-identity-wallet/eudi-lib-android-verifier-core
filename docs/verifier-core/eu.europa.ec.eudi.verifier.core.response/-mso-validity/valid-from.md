@@ -3,4 +3,4 @@
 # validFrom
 
 [androidJvm]\
-val [validFrom](valid-from.md): Instant
+val [validFrom](valid-from.md): [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html)
