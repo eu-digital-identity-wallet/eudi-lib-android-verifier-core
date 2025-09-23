@@ -34,7 +34,6 @@ import org.multipaz.mdoc.connectionmethod.MdocConnectionMethod
 import org.multipaz.mdoc.request.DeviceRequestGenerator
 import org.multipaz.mdoc.response.DeviceResponseParser
 import org.multipaz.mdoc.role.MdocRole
-import org.multipaz.util.toBase64
 import java.util.concurrent.Executor
 
 class TransferManagerImpl(
@@ -72,9 +71,8 @@ class TransferManagerImpl(
             if (availableMdocConnectionMethods.isNotEmpty()) {
                 verificationHelper?.connect(availableMdocConnectionMethods.first())
             } else {
+                onError(IllegalStateException("No mdoc connection method selected"))
                 logger?.e(TAG, "No mdoc connection method selected")
-                //TODO  trigger Error event instead of throwing exception
-                throw IllegalStateException("No mdoc connection method selected")
             }
         }
 
@@ -97,18 +95,18 @@ class TransferManagerImpl(
             verificationHelper?.let { verification ->
                 val parser = DeviceResponseParser(deviceResponseBytes, verification.sessionTranscript)
                 parser.setEphemeralReaderKey(verification.eReaderKey)
-                // TODO Handle exceptions from parse()
-                //  trigger Error event instead of throwing exception
-                val deviceResponse = DeviceResponse(
-                    parser.parse(),
-                    deviceResponseBytes
-                )
-
-                logger?.d(TAG, "ResponseReceived ${Cbor.toDiagnostics(deviceResponseBytes)}")
-
-                transferEventListener?.onEvent(
-                    TransferEvent.ResponseReceived(deviceResponse)
-                )
+                try {
+                    val deviceResponse = DeviceResponse(
+                        parser.parse(),
+                        deviceResponseBytes
+                    )
+                    logger?.d(TAG, "ResponseReceived ${Cbor.toDiagnostics(deviceResponseBytes)}")
+                    transferEventListener?.onEvent(
+                        TransferEvent.ResponseReceived(deviceResponse)
+                    )
+                } catch (e: Exception) {
+                    onError(e)
+                }
             }
 
             stopSession()
@@ -159,31 +157,27 @@ class TransferManagerImpl(
         logger?.d(TAG, "Not implemented yet")
     }
 
-    override fun sendRequest(request: Request) {
+    override fun sendRequest(request: DeviceRequest) {
         logger?.d(TAG, "About to send Document Request")
         // Use DeviceRequestGenerator to generate a DeviceRequest bytes
         // then send it using verificationHelper.sendRequest()
-        if (request is DeviceRequest) {
-            verificationHelper?.let { verification ->
-                val requestGenerator = DeviceRequestGenerator(verification.sessionTranscript).apply {
-                    request.docRequests.forEach { doc ->
-                        addDocumentRequest(
-                            docType = doc.docType,
-                            itemsToRequest = doc.itemsRequest,
-                            readerKeyCertificateChain = null,
-                            requestInfo = null,
-                            readerKey = null,
-                            signatureAlgorithm = Algorithm.UNSET
-                        )
-                    }
+        verificationHelper?.let { verification ->
+            val requestGenerator = DeviceRequestGenerator(verification.sessionTranscript).apply {
+                request.docRequests.forEach { doc ->
+                    addDocumentRequest(
+                        docType = doc.docType,
+                        itemsToRequest = doc.itemsRequest,
+                        readerKeyCertificateChain = null,
+                        requestInfo = null,
+                        readerKey = null,
+                        signatureAlgorithm = Algorithm.UNSET
+                    )
                 }
-                // Log requestGenerator.generate()
-                verification.sendRequest(requestGenerator.generate())
-                transferEventListener?.onEvent(TransferEvent.RequestSent)
             }
-        } else {
-            logger?.e(TAG, "Unsupported request type")
-            throw IllegalArgumentException("Unsupported request type: ${request::class.simpleName}")
+            val deviceRequestBytes = requestGenerator.generate()
+            logger?.d(TAG, "Request Doc ${Cbor.toDiagnostics(deviceRequestBytes)}")
+            verification.sendRequest(deviceRequestBytes)
+            transferEventListener?.onEvent(TransferEvent.RequestSent)
         }
     }
 
