@@ -16,7 +16,6 @@
 package eu.europa.ec.eudi.verifier.core
 
 import android.content.Context
-import androidx.annotation.RawRes
 import eu.europa.ec.eudi.verifier.core.internal.LogPrinterImpl
 import eu.europa.ec.eudi.verifier.core.logging.Logger
 import eu.europa.ec.eudi.verifier.core.statium.DocumentStatusResolver
@@ -103,23 +102,29 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
 
         var logger: Logger? = null
 
-        private var certificates: List<X509Certificate> = emptyList()
+        private var certificates: List<X509Certificate>? = null
+
+        private var certificatesProvider: CertificatesProvider? = null
 
         private var documentStatusResolver: DocumentStatusResolver? = null
 
         /**
-         * Configures the verifier to trust a custom set of certificates provided
-         * as raw resource IDs from the app.
+         * Configures the verifier to trust a pre-loaded list of X509Certificates.
          */
-        fun trustedCertificates(@RawRes vararg certificateRawIds: Int) {
-            certificates = CertificateProvider.loadCertificates(context, certificateRawIds.toList())
+        fun trustedCertificates(certificatesProvided: List<X509Certificate>) = apply {
+            certificates = certificatesProvided
         }
 
         /**
-         * Configures the verifier to trust a pre-loaded list of X509Certificates.
+         * Configures the verifier to trust certificates provided by the given [CertificatesProvider].
+         * The provider will be called during the build process to obtain the certificates.
+         * If both this and [trustedCertificates] are used, the statically provided certificates
+         * will take precedence.
+         * @param provider The [CertificatesProvider] to fetch trusted certificates from.
+         * @return this [Builder] instance
          */
-        fun trustedCertificates(certificatesProvided: List<X509Certificate>) {
-            certificates = certificatesProvided
+        fun trustedCertificates(provider: CertificatesProvider) = apply {
+            certificatesProvider = provider
         }
 
         /**
@@ -147,11 +152,15 @@ interface EudiVerifier : TransferManagerFactory, DocumentStatusResolver, Documen
                 MultipazLogger.logPrinter = LogPrinterImpl(it)
             }
 
+            val certificatesToUse = certificates ?: runBlocking {
+                certificatesProvider?.getCertificates()
+            } ?: emptyList()
+
             val trustManager = TrustManagerLocal(
                 storage = EphemeralStorage(),
                 identifier = "EudiVerifier",
             ).apply {
-                certificates.forEach { cert ->
+                certificatesToUse.forEach { cert ->
                     val customCert = X509Cert(cert.encoded)
                     runBlocking {
                         addX509Cert(
