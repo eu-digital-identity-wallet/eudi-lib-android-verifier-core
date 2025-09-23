@@ -3,4 +3,4 @@
 # MsoValidity
 
 [androidJvm]\
-constructor(signed: Instant, validFrom: Instant, validUntil: Instant)
+constructor(signed: [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html), validFrom: [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html), validUntil: [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html))

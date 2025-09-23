@@ -3,4 +3,4 @@
 # signed
 
 [androidJvm]\
-val [signed](signed.md): Instant
+val [signed](signed.md): [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html)

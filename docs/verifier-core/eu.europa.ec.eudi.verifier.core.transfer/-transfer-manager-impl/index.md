@@ -3,13 +3,25 @@
 # TransferManagerImpl
 
 [androidJvm]\
-class [TransferManagerImpl](index.md)(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html), config: [TransferConfig](../-transfer-config/index.md)) : [TransferManager](../-transfer-manager/index.md)
+class [TransferManagerImpl](index.md)(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html), config: [TransferConfig](../-transfer-config/index.md), var logger: [Logger](../../eu.europa.ec.eudi.verifier.core.logging/-logger/index.md)? = null) : [TransferManager](../-transfer-manager/index.md)
 
 ## Constructors
 
 | | |
 |---|---|
-| [TransferManagerImpl](-transfer-manager-impl.md) | [androidJvm]<br>constructor(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html), config: [TransferConfig](../-transfer-config/index.md)) |
+| [TransferManagerImpl](-transfer-manager-impl.md) | [androidJvm]<br>constructor(context: [Context](https://developer.android.com/reference/kotlin/android/content/Context.html), config: [TransferConfig](../-transfer-config/index.md), logger: [Logger](../../eu.europa.ec.eudi.verifier.core.logging/-logger/index.md)? = null) |
+
+## Types
+
+| Name | Summary |
+|---|---|
+| [Companion](-companion/index.md) | [androidJvm]<br>object [Companion](-companion/index.md) |
+
+## Properties
+
+| Name | Summary |
+|---|---|
+| [logger](logger.md) | [androidJvm]<br>var [logger](logger.md): [Logger](../../eu.europa.ec.eudi.verifier.core.logging/-logger/index.md)? |
 
 ## Functions
 

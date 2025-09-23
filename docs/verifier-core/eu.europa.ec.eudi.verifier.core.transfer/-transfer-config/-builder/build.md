@@ -15,4 +15,4 @@ A new [TransferConfig](../index.md) instance.
 
 | | |
 |---|---|
-| [IllegalStateException](https://developer.android.com/reference/kotlin/java/lang/IllegalStateException.html) | if no engagement methods are configured. |
+| [IllegalStateException](https://developer.android.com/reference/kotlin/java/lang/IllegalStateException.html) | if no engagement methods are configured, or if a BLE connection is configured incorrectly (e.g., no supported modes or missing UUIDs) |

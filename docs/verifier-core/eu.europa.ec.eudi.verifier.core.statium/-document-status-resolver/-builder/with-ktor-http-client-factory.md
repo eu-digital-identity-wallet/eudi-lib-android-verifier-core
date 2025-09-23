@@ -3,7 +3,7 @@
 # withKtorHttpClientFactory
 
 [androidJvm]\
-fun [withKtorHttpClientFactory](with-ktor-http-client-factory.md)(ktorHttpClientFactory: () -&gt; HttpClient): &lt;Error class: unknown class&gt;
+fun [withKtorHttpClientFactory](with-ktor-http-client-factory.md)(ktorHttpClient: HttpClient): &lt;Error class: unknown class&gt;
 
 Sets the factory function to create an HttpClient
 

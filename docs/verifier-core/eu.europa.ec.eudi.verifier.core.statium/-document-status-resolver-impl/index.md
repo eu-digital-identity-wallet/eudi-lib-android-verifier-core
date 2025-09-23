@@ -2,7 +2,7 @@
 
 # DocumentStatusResolverImpl
 
-class [DocumentStatusResolverImpl](index.md)(verifySignature: VerifyStatusListTokenSignature, allowedClockSkew: [Duration](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-duration/index.html), ktorHttpClientFactory: () -&gt; HttpClient) : [DocumentStatusResolver](../-document-status-resolver/index.md)
+class [DocumentStatusResolverImpl](index.md)(verifySignature: VerifyStatusListTokenJwtSignature, allowedClockSkew: [Duration](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-duration/index.html), ktorHttpClient: HttpClient) : [DocumentStatusResolver](../-document-status-resolver/index.md)
 
 Default implementation of [DocumentStatusResolver](../-document-status-resolver/index.md) that validates document status against status list services.
 
@@ -25,13 +25,13 @@ androidJvm
 |---|---|
 | verifySignature | A function to verify status list token signatures |
 | allowedClockSkew | The maximum time difference allowed between local and server clocks |
-| ktorHttpClientFactory | A factory function to create HTTP clients for status list requests |
+| ktorHttpClient | A factory function to create HTTP clients for status list requests |
 
 ## Constructors
 
 | | |
 |---|---|
-| [DocumentStatusResolverImpl](-document-status-resolver-impl.md) | [androidJvm]<br>constructor(verifySignature: VerifyStatusListTokenSignature, allowedClockSkew: [Duration](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-duration/index.html), ktorHttpClientFactory: () -&gt; HttpClient) |
+| [DocumentStatusResolverImpl](-document-status-resolver-impl.md) | [androidJvm]<br>constructor(verifySignature: VerifyStatusListTokenJwtSignature, allowedClockSkew: [Duration](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-duration/index.html), ktorHttpClient: HttpClient) |
 
 ## Functions
 

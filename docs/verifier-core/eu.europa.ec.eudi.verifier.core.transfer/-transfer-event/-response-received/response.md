@@ -3,7 +3,7 @@
 # response
 
 [androidJvm]\
-val [response](response.md): [Response](../../../eu.europa.ec.eudi.verifier.core.response/-response/index.md)
+val [response](response.md): [DeviceResponse](../../../eu.europa.ec.eudi.verifier.core.response/-device-response/index.md)
 
 #### Parameters
 
