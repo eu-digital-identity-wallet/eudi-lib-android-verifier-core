@@ -3,4 +3,4 @@
 # validUntil
 
 [androidJvm]\
-val [validUntil](valid-until.md): Instant
+val [validUntil](valid-until.md): [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html)

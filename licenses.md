@@ -1,7 +1,7 @@
 
 # EUDI Verifier Core library for Android
 ## Dependency License Report
-_2025-09-08 10:24:08 EEST_
+_2025-09-23 09:24:44 EEST_
 ## Apache License, Version 2.0
 
 **1** **Group:** `androidx.appcompat` **Name:** `appcompat` **Version:** `1.7.1` 
@@ -30,20 +30,20 @@ _2025-09-08 10:24:08 EEST_
 > - **POM Project URL**: [https://github.com/ktorio/ktor](https://github.com/ktorio/ktor)
 > - **POM License**: Apache License, Version 2.0 - [https://www.apache.org/licenses/LICENSE-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-**7** **Group:** `org.jetbrains.kotlin` **Name:** `kotlin-stdlib` **Version:** `2.1.21` 
+**7** **Group:** `org.jetbrains.kotlin` **Name:** `kotlin-stdlib` **Version:** `2.2.0` 
 > - **POM Project URL**: [https://kotlinlang.org/](https://kotlinlang.org/)
 > - **POM License**: Apache License, Version 2.0 - [https://www.apache.org/licenses/LICENSE-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-**8** **Group:** `org.multipaz` **Name:** `multipaz-android-legacy` **Version:** `0.92.1` 
+**8** **Group:** `org.multipaz` **Name:** `multipaz-android` **Version:** `0.93.0` 
 > - **POM License**: Apache License, Version 2.0 - [https://www.apache.org/licenses/LICENSE-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-**9** **Group:** `org.multipaz` **Name:** `multipaz-android` **Version:** `0.92.1` 
+**9** **Group:** `org.multipaz` **Name:** `multipaz-android-legacy` **Version:** `0.93.0` 
 > - **POM License**: Apache License, Version 2.0 - [https://www.apache.org/licenses/LICENSE-2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-## Creative Commons Legal Code
+## Unlicense
 
-**10** **Group:** `com.upokecenter` **Name:** `cbor` **Version:** `3.5.0` 
+**10** **Group:** `com.upokecenter` **Name:** `cbor` **Version:** `4.5.6` 
 > - **POM Project URL**: [https://github.com/peteroupc/CBOR-Java](https://github.com/peteroupc/CBOR-Java)
-> - **POM License**: Creative Commons Legal Code - [https://creativecommons.org/publicdomain/zero/1.0/legalcode](https://creativecommons.org/publicdomain/zero/1.0/legalcode)
+> - **POM License**: Unlicense - [https://unlicense.org/](https://unlicense.org/)
 
 

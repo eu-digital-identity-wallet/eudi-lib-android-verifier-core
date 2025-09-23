@@ -3,7 +3,7 @@
 # ResponseReceived
 
 [androidJvm]\
-constructor(response: [Response](../../../eu.europa.ec.eudi.verifier.core.response/-response/index.md))
+constructor(response: [DeviceResponse](../../../eu.europa.ec.eudi.verifier.core.response/-device-response/index.md))
 
 #### Parameters
 

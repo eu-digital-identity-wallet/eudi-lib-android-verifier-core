@@ -2,7 +2,7 @@
 
 # ResponseReceived
 
-data class [ResponseReceived](index.md)(val response: [Response](../../../eu.europa.ec.eudi.verifier.core.response/-response/index.md)) : [TransferEvent](../index.md)
+data class [ResponseReceived](index.md)(val response: [DeviceResponse](../../../eu.europa.ec.eudi.verifier.core.response/-device-response/index.md)) : [TransferEvent](../index.md)
 
 Indicates that a response has been received from the holder device.
 
@@ -18,10 +18,10 @@ androidJvm
 
 | | |
 |---|---|
-| [ResponseReceived](-response-received.md) | [androidJvm]<br>constructor(response: [Response](../../../eu.europa.ec.eudi.verifier.core.response/-response/index.md)) |
+| [ResponseReceived](-response-received.md) | [androidJvm]<br>constructor(response: [DeviceResponse](../../../eu.europa.ec.eudi.verifier.core.response/-device-response/index.md)) |
 
 ## Properties
 
 | Name | Summary |
 |---|---|
-| [response](response.md) | [androidJvm]<br>val [response](response.md): [Response](../../../eu.europa.ec.eudi.verifier.core.response/-response/index.md) |
+| [response](response.md) | [androidJvm]<br>val [response](response.md): [DeviceResponse](../../../eu.europa.ec.eudi.verifier.core.response/-device-response/index.md) |

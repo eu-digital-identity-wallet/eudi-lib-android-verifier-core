@@ -3,9 +3,9 @@
 # isDocumentTrusted
 
 [androidJvm]\
-open override fun [isDocumentTrusted](is-document-trusted.md)(document: DeviceResponseParser.Document, atTime: Instant): TrustManager.TrustResult
+open suspend override fun [isDocumentTrusted](is-document-trusted.md)(document: DeviceResponseParser.Document, atTime: [Instant](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin.time/-instant/index.html)): TrustResult
 
-Implementation of [DocumentTrust.isDocumentTrusted](../-document-trust/is-document-trusted.md) that delegates verification to the verifier's [trustManager](trust-manager.md).
+Implementation of [DocumentTrust.isDocumentTrusted](../../eu.europa.ec.eudi.verifier.core.trust/-document-trust/is-document-trusted.md) that delegates verification to the verifier's [trustManager](trust-manager.md).
 
 #### Return
 
