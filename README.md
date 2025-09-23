@@ -108,6 +108,10 @@ verifier.
 ```kotlin
 // Configuring the verifier
 lateinit var context: Context
+
+// certificates of trusted issuers
+val certificates = listOf<X509Certificate>()
+
 // An instance of EudiVerifier is built through the invoke operator
 val eudiVerifier = EudiVerifier(
     context,
@@ -117,13 +121,9 @@ val eudiVerifier = EudiVerifier(
     }
 ) {
     // certificates of trusted issuers
-    trustedCertificates(
-        R.raw.apple_iaca,
-        R.raw.credenceid_mdl_iaca_root,
-        R.raw.google_mdl_iaca_cert
-    )
+    trustedCertificates(certificates)
 
-    // Optional custom Logger
+    // Optional custom Logger. Omitting will result in default Logger implementation used
     withLogger { record: Logger.Record ->
         // provide your implementation of log()
     }
@@ -143,6 +143,10 @@ To create TransferManager, use the `EudiVerifier.createTransferManager` method.
 // create transfer manager
 
 val connectionMethods = listOf<MdocConnectionMethod>(
+    // MdocConnectionMethodBle must have at least 1 of (supportsPeripheralServerMode, supportsCentralClientMode) = true
+    // If supportsPeripheralServerMode=true -> peripheralServerModeUuid must be passed(not null)
+    // If supportsCentralClientMode=true -> centralClientModeUuid must be passed(not null)
+    // Failure to comply with the above will result in an IllegalStateException when creating TransferManager during TransferConfig setup
     MdocConnectionMethodBle(
         supportsPeripheralServerMode = false,
         supportsCentralClientMode = true,
@@ -208,31 +212,31 @@ document.
 // Configuring the verifier
 
 lateinit var context: Context
+// certificates of trusted issuers
+val certificates = listOf<X509Certificate>()
 
-// An instance of EudiVerifier is built through the invoke operator
 val eudiVerifier = EudiVerifier(
-    context,
-    EudiVerifierConfig {
-        // Optional configuration of logging level, defaults to LEVEL_INFO
-        configureLogging(level = Logger.LEVEL_DEBUG)
-    }
+  context,
+  EudiVerifierConfig {
+    // Optional configuration of logging level, defaults to LEVEL_INFO
+    configureLogging(level = Logger.LEVEL_DEBUG)
+  }
 ) {
-    // certificates of trusted issuers
-    trustedCertificates(
-        R.raw.apple_iaca,
-        R.raw.credenceid_mdl_iaca_root,
-        R.raw.google_mdl_iaca_cert
-    )
+  trustedCertificates(certificates)
 
-    // Optional custom Logger
-    withLogger { record: Logger.Record ->
-        // provide your implementation of log()
-    }
+  // Optional custom Logger. Omitting will result in default Logger implementation used
+  withLogger { record: Logger.Record ->
+    // provide your implementation of log()
+  }
 }
 
 // create transfer manager
 
 val connectionMethods = listOf<MdocConnectionMethod>(
+    // MdocConnectionMethodBle must have at least 1 of (supportsPeripheralServerMode, supportsCentralClientMode) = true
+    // If supportsPeripheralServerMode=true -> peripheralServerModeUuid must be passed(not null)
+    // If supportsCentralClientMode=true -> centralClientModeUuid must be passed(not null)
+    // Failure to comply with the above will result in an IllegalStateException when creating TransferManager during TransferConfig setup
     MdocConnectionMethodBle(
         supportsPeripheralServerMode = false,
         supportsCentralClientMode = true,
@@ -305,7 +309,7 @@ transferManager.addListener { event ->
             }
 
             // Call suspend function resolveStatus within a Coroutine to retrieve a List of Document Status(Valid, Invalid or Suspended)
-            lifecycleScope.launch {
+            runBlocking {
                 val revocationStatus = eudiVerifier.resolveStatus(response)
             }
 

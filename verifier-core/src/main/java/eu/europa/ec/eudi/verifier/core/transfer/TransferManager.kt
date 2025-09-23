@@ -17,6 +17,7 @@ package eu.europa.ec.eudi.verifier.core.transfer
 
 import android.app.Activity
 import android.nfc.NfcAdapter
+import eu.europa.ec.eudi.verifier.core.request.DeviceRequest
 import eu.europa.ec.eudi.verifier.core.request.Request
 
 /**
@@ -58,7 +59,7 @@ interface TransferManager {
      * Sends a request to the holder device.
      * @param request The request to send.
      */
-    fun sendRequest(request: Request) // TODO make Request type more specific: DeviceRequest
+    fun sendRequest(request: DeviceRequest)
 
     /**
      * Stops the current transfer session.
