@@ -73,6 +73,7 @@ class TransferManagerImpl(
                 verificationHelper?.connect(availableMdocConnectionMethods.first())
             } else {
                 logger?.e(TAG, "No mdoc connection method selected")
+                //TODO  trigger Error event instead of throwing exception
                 throw IllegalStateException("No mdoc connection method selected")
             }
         }
@@ -96,7 +97,8 @@ class TransferManagerImpl(
             verificationHelper?.let { verification ->
                 val parser = DeviceResponseParser(deviceResponseBytes, verification.sessionTranscript)
                 parser.setEphemeralReaderKey(verification.eReaderKey)
-
+                // TODO Handle exceptions from parse()
+                //  trigger Error event instead of throwing exception
                 val deviceResponse = DeviceResponse(
                     parser.parse(),
                     deviceResponseBytes
@@ -142,7 +144,7 @@ class TransferManagerImpl(
                 .build()
         ).build()
         // This is not required ove BLE !! this will be set in enableNFCDeviceEngagement
-        // Αν αφορα τον 1 απο τους 2 τροπους NFC, Negotiated or Static
+        // For NFC handover, Negotiated or Static
 //            .setNegotiatedHandoverConnectionMethods(
 //                config.engagementMethods.get(TransferConfig.EngagementMethod.QR)!!
 //            ).build()
