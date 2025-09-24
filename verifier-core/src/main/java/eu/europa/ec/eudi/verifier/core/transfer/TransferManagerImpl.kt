@@ -40,6 +40,11 @@ class TransferManagerImpl(
     private val context: Context,
     private val config: TransferConfig,
     var logger: Logger? = null,
+    private val verificationHelperFactory: (Context, VerificationHelper.Listener, Executor, DataTransportOptions) -> VerificationHelper = { ctx, listener, executor, options ->
+        VerificationHelper.Builder(ctx, listener, executor)
+            .setDataTransportOptions(options)
+            .build()
+    }
 ) : TransferManager {
 
     private var transferEventListener : TransferEvent.Listener? = null
@@ -129,23 +134,26 @@ class TransferManagerImpl(
         transferEventListener = null
     }
 
+    /**
+     * Starts device engagement using a QR code.
+     * @param qrCode The QR code string.
+     * @throws IllegalArgumentException if the QR code is invalid.
+     */
     override fun startQRDeviceEngagement(qrCode: String) {
         logger?.d(TAG, "QR Engagement Request: $qrCode")
-        verificationHelper = VerificationHelper.Builder(
+
+        val options = DataTransportOptions.Builder()
+            .setBleUseL2CAP(config.bleUseL2CAP)
+            .setBleClearCache(config.bleClearCache)
+            .build()
+
+        verificationHelper = verificationHelperFactory(
             context,
             responseListener,
-            context.mainExecutor()
-        ).setDataTransportOptions(
-            DataTransportOptions.Builder()
-                .setBleUseL2CAP(config.bleUseL2CAP)
-                .setBleClearCache(config.bleClearCache)
-                .build()
-        ).build()
-        // This is not required ove BLE !! this will be set in enableNFCDeviceEngagement
-        // For NFC handover, Negotiated or Static
-//            .setNegotiatedHandoverConnectionMethods(
-//                config.engagementMethods.get(TransferConfig.EngagementMethod.QR)!!
-//            ).build()
+            context.mainExecutor(),
+            options
+        )
+
         verificationHelper?.setDeviceEngagementFromQrCode(qrCode)
     }
 
