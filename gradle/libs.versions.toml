@@ -18,6 +18,9 @@ mavenPublish = "0.34.0"
 dokka = "1.9.20"
 ktor = "3.2.3"
 sonarqube = "6.3.1.5724"
+mockk = "1.14.5"
+kotlin-coroutines-test = "1.10.2"
+json = "20250517"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +36,9 @@ nimbus-jose = { module = "com.nimbusds:nimbus-jose-jwt", version.ref = "nimbus-j
 com-upokecenter-cbor = { module = "com.upokecenter:cbor", version.ref = "cbor-version" }
 ktor-client-android = { module = "io.ktor:ktor-client-android", version.ref = "ktor" }
 ktor-client-logging = { module = "io.ktor:ktor-client-logging", version.ref = "ktor" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+json = { module = "org.json:json", version.ref = "json" }
+kotlin-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "kotlin-coroutines-test" }
 
 [plugins]
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
