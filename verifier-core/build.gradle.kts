@@ -128,6 +128,11 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    testImplementation(kotlin("test"))
+    testImplementation(libs.mockk)
+    testImplementation(libs.json)
+    testImplementation(libs.kotlin.coroutines.test)
 }
 
 // Dokka generation
