@@ -46,7 +46,7 @@ import kotlin.time.Duration
  *
  * @param verifySignature A function to verify status list token signatures
  * @param allowedClockSkew The maximum time difference allowed between local and server clocks
- * @param ktorHttpClient A factory function to create HTTP clients for status list requests
+ * @param ktorHttpClient An [HttpClient] instance for status list requests
  */
 class DocumentStatusResolverImpl(
     internal val verifySignature: VerifyStatusListTokenJwtSignature,
