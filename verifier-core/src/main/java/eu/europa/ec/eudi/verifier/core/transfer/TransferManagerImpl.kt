@@ -137,7 +137,7 @@ class TransferManagerImpl(
     /**
      * Starts device engagement using a QR code.
      * @param qrCode The QR code string.
-     * @throws IllegalArgumentException if the QR code is invalid.
+     * If the QR code is invalid, the error will be reported via the [TransferEvent.Error] callback.
      */
     override fun startQRDeviceEngagement(qrCode: String) {
         logger?.d(TAG, "QR Engagement Request: $qrCode")

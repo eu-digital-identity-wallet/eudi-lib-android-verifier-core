@@ -354,6 +354,7 @@ transferManager.addListener { event ->
 
 // use scanner library of your choice to scan the QR for device engagement
 // when qr content is available, call startQRDeviceEngagement()
+// if qrText is malformed an IllegalArgumentException is propagated to TransferEvent.Error callback
 val qrText: String =
     "mdoc:owBjMS4wAYIB2BhYS6QBAiABIVggN ... 86vSyDAgGjAPUB9ApQmCMM53MkSc202zKjnzq9LA"
 transferManager.startQRDeviceEngagement(qrText)
