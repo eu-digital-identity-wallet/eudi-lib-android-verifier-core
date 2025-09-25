@@ -49,7 +49,7 @@ interface DocumentStatusResolver {
         /**
          * Creates an instance of [DocumentStatusResolver]
          *
-         * @param ktorHttpClientFactory a factory function to create an [HttpClient]
+         * @param ktorHttpClient an [HttpClient] instance
          * @param verifySignature a function to verify the status list token signature
          * @param allowedClockSkew the allowed clock skew for the verification
          */
@@ -78,10 +78,10 @@ interface DocumentStatusResolver {
 
     /**
      * Builder for [DocumentStatusResolver]
-     * It allows to set the parameters for the resolver it builds a [DocumentStatusResolverImpl]
+     * It allows to set the parameters for the resolver; it builds a [DocumentStatusResolverImpl]
      *
      * @property verifySignature a function to verify the status list token signature; default is [VerifyStatusListTokenSignature.x5c]
-     * @property ktorHttpClientFactory a factory function to create an [HttpClient]; default is [HttpClient]
+     * @property ktorHttpClient an [HttpClient] instance; default is [HttpClient]
      * @property allowedClockSkew the allowed clock skew for the verification; default is [Duration.ZERO]
      * @property extractor an instance of [StatusReferenceExtractor] to extract the status reference from the document; default is [DefaultStatusReferenceExtractor]
      */
@@ -103,11 +103,11 @@ interface DocumentStatusResolver {
         }
 
         /**
-         * Sets the factory function to create an [HttpClient]
-         * @param ktorHttpClientFactory a factory function to create an [HttpClient]
+         * Sets the instance of [HttpClient]
+         * @param ktorHttpClient an [HttpClient] instance
          * @return the builder instance
          */
-        fun withKtorHttpClientFactory(ktorHttpClient: HttpClient) = apply {
+        fun withKtorHttpClient(ktorHttpClient: HttpClient) = apply {
             this.ktorHttpClient = ktorHttpClient
         }
 
@@ -132,4 +132,3 @@ interface DocumentStatusResolver {
         }
     }
 }
-
