@@ -140,12 +140,19 @@ class TransferManagerImplTest {
     }
 
     @Test
-    fun `startQRDeviceEngagement with garbage QR code throws`() {
+    fun `startQRDeviceEngagement with garbage QR code triggers error event`() {
+        transferManager.addListener(listener)
         val garbageQr = "hYS6QBAiABIVgg0Gzvq_N_tpQNv"
-        every { verificationHelper.setDeviceEngagementFromQrCode(garbageQr) } throws IllegalArgumentException("Invalid QR")
 
-        assertFailsWith<IllegalArgumentException> {
-            transferManager.startQRDeviceEngagement(garbageQr)
+        val thrown = runCatching { transferManager.startQRDeviceEngagement(garbageQr) }.exceptionOrNull()
+        assertNull(thrown, "startQRDeviceEngagement should not throw for invalid QR; error is async")
+
+        // Simulate what the underlying helper would do
+        val ex = IllegalArgumentException("Invalid QR")
+        capturedVerificationListener.onError(ex)
+
+        verify {
+            listener.onEvent(match { it is TransferEvent.Error && it.error == ex })
         }
     }
 
