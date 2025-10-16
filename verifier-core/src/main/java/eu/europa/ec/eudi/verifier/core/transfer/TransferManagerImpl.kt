@@ -26,7 +26,6 @@ import eu.europa.ec.eudi.verifier.core.logging.Logger
 import eu.europa.ec.eudi.verifier.core.logging.d
 import eu.europa.ec.eudi.verifier.core.logging.e
 import eu.europa.ec.eudi.verifier.core.request.DeviceRequest
-import eu.europa.ec.eudi.verifier.core.request.Request
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
 import org.multipaz.cbor.Cbor
 import org.multipaz.crypto.Algorithm
@@ -40,10 +39,15 @@ class TransferManagerImpl(
     private val context: Context,
     private val config: TransferConfig,
     var logger: Logger? = null,
-    private val verificationHelperFactory: (Context, VerificationHelper.Listener, Executor, DataTransportOptions) -> VerificationHelper = { ctx, listener, executor, options ->
-        VerificationHelper.Builder(ctx, listener, executor)
+    private val verificationHelperFactory: (Context, VerificationHelper.Listener, Executor, DataTransportOptions, List<MdocConnectionMethod>?) -> VerificationHelper = { ctx, listener, executor, options, connectionMethods ->
+        val builder = VerificationHelper.Builder(ctx, listener, executor)
             .setDataTransportOptions(options)
-            .build()
+
+        connectionMethods?.let {
+            builder.setNegotiatedHandoverConnectionMethods(it)
+        }
+
+        builder.build()
     }
 ) : TransferManager {
 
@@ -151,18 +155,62 @@ class TransferManagerImpl(
             context,
             responseListener,
             context.mainExecutor(),
-            options
+            options,
+            null
         )
 
         verificationHelper?.setDeviceEngagementFromQrCode(qrCode)
     }
 
-    override fun enableNFCDeviceEngagement(nfcAdapter: NfcAdapter, activity: Activity) {
-        logger?.d(TAG, "Not implemented yet")
+    override fun enableNFCDeviceEngagement(activity: Activity) {
+
+        val options = DataTransportOptions.Builder()
+            .setBleUseL2CAP(config.bleUseL2CAP)
+            .setBleClearCache(config.bleClearCache)
+            .build()
+
+        val negotiatedConnectionMethods = config.engagementMethods.getOrDefault(
+            TransferConfig.EngagementMethod.NFC,
+            emptyList()
+        )
+
+        verificationHelper = verificationHelperFactory(
+            context,
+            responseListener,
+            context.mainExecutor(),
+            options,
+            negotiatedConnectionMethods
+        )
+
+        val adapter = NfcAdapter.getDefaultAdapter(context)
+        if (adapter == null) {
+            val error = IllegalStateException("NFC is not available on this device.")
+            logger?.e(TAG, error.message.toString())
+            transferEventListener?.onEvent(TransferEvent.Error(error))
+            return
+        }
+
+        adapter.enableReaderMode(
+            activity,
+            { tag ->
+                verificationHelper?.nfcProcessOnTagDiscovered(tag)
+                logger?.d(TAG, "NFC Tag Discovered: $tag")
+            },
+            NfcAdapter.FLAG_READER_NFC_A + NfcAdapter.FLAG_READER_NFC_B
+                    + NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK + NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
+            null
+        )
     }
 
-    override fun disableNFCDeviceEngagement() {
-        logger?.d(TAG, "Not implemented yet")
+    /**
+     * Disables NFC engagement for the given Activity.
+     * This MUST be called from the Activity's onPause().
+     * @param activity The activity that previously enabled reader mode.
+     */
+    override fun disableNFCDeviceEngagement(activity: Activity) {
+        logger?.d(TAG, "Disabling NFC Reader Mode for Activity: ${activity.javaClass.simpleName}")
+        val nfcAdapter = NfcAdapter.getDefaultAdapter(activity)
+        nfcAdapter?.disableReaderMode(activity)
     }
 
     override fun sendRequest(request: DeviceRequest) {
