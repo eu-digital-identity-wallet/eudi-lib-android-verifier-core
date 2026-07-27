@@ -26,10 +26,14 @@ import eu.europa.ec.eudi.verifier.core.logging.Logger
 import eu.europa.ec.eudi.verifier.core.logging.d
 import eu.europa.ec.eudi.verifier.core.logging.e
 import eu.europa.ec.eudi.verifier.core.request.DeviceRequest
-import eu.europa.ec.eudi.verifier.core.request.Request
+import eu.europa.ec.eudi.verifier.core.request.EU_WRPRC_REQUEST_INFO_KEY
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
+import org.multipaz.cbor.Bstr
 import org.multipaz.cbor.Cbor
+import kotlinx.coroutines.runBlocking
 import org.multipaz.crypto.Algorithm
+import org.multipaz.crypto.X509CertChain
+import org.multipaz.crypto.fromJavaX509Certificates
 import org.multipaz.mdoc.connectionmethod.MdocConnectionMethod
 import org.multipaz.mdoc.request.DeviceRequestGenerator
 import org.multipaz.mdoc.response.DeviceResponseParser
@@ -167,19 +171,49 @@ class TransferManagerImpl(
 
     override fun sendRequest(request: DeviceRequest) {
         logger?.d(TAG, "About to send Document Request")
+        // A registration certificate is bound to the reader's access certificate, so it can only be
+        // sent on a request that is reader-authenticated.
+        require(request.registrationCertificate == null || request.readerAuth != null) {
+            "A relying party registration certificate requires reader authentication"
+        }
         // Use DeviceRequestGenerator to generate a DeviceRequest bytes
         // then send it using verificationHelper.sendRequest()
         verificationHelper?.let { verification ->
+            val readerAuth = request.readerAuth
+            val readerCertificateChain = readerAuth?.let {
+                X509CertChain.fromJavaX509Certificates(it.certificateChain)
+            }
+            // The registration certificate is repeated in every ItemsRequest's requestInfo
+            val requestInfo = request.registrationCertificate?.let { wrprc ->
+                mapOf(EU_WRPRC_REQUEST_INFO_KEY to Cbor.encode(Bstr(wrprc)))
+            }
+
             val requestGenerator = DeviceRequestGenerator(verification.sessionTranscript).apply {
                 request.docRequests.forEach { doc ->
-                    addDocumentRequest(
-                        docType = doc.docType,
-                        itemsToRequest = doc.itemsRequest,
-                        readerKeyCertificateChain = null,
-                        requestInfo = null,
-                        readerKey = null,
-                        signatureAlgorithm = Algorithm.UNSET
-                    )
+                    if (readerAuth != null) {
+                        // Signed request
+                        runBlocking {
+                            addDocumentRequest(
+                                docType = doc.docType,
+                                itemsToRequest = doc.itemsRequest,
+                                requestInfo = requestInfo,
+                                readerKeySecureArea = readerAuth.secureArea,
+                                readerKeyAlias = readerAuth.keyAlias,
+                                readerKeyCertificateChain = readerCertificateChain!!,
+                                keyUnlockData = readerAuth.keyUnlockData,
+                            )
+                        }
+                    } else {
+                        // Unsigned request
+                        addDocumentRequest(
+                            docType = doc.docType,
+                            itemsToRequest = doc.itemsRequest,
+                            requestInfo = requestInfo,
+                            readerKey = null,
+                            signatureAlgorithm = Algorithm.UNSET,
+                            readerKeyCertificateChain = null,
+                        )
+                    }
                 }
             }
             val deviceRequestBytes = requestGenerator.generate()
@@ -203,6 +237,7 @@ class TransferManagerImpl(
             ContextCompat.getMainExecutor(context)
         }
     }
+
     companion object {
         private const val TAG = "TransferManager"
         private const val RESPONSE = "response"

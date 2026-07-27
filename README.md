@@ -261,9 +261,6 @@ val transferManager = eudiVerifier.createTransferManager {
 transferManager.addListener { event ->
     when (event) {
         is TransferEvent.Connected -> {
-            // set Certificate for reader authentication - currently not supported 
-            // val readerAuthCertificate: X509Certificate? = null
-
             // connected to device. Send request
             val docRequest = DocRequest(
                 docType = "org.iso.18013.5.1.mDL",
@@ -275,14 +272,14 @@ transferManager.addListener { event ->
                         "family_name" to false,
                         "birth_date" to false
                     )
-                ),
-                // readerAuthentication is not supported yet
-                readerAuthCertificate = null
+                )
             )
             // create more docRequests if needed
             // ...
 
             // create device request
+            // The request can optionally be signed (reader authentication) and carry a relying party
+            // registration certificate — see "Reader authentication and registration certificate".
             val deviceRequest = DeviceRequest(docRequests = listOf(docRequest))
             // send device request
             event.transferManager.sendRequest(deviceRequest)
@@ -360,6 +357,49 @@ val qrText: String =
 transferManager.startQRDeviceEngagement(qrText)
 
 ```
+
+#### Reader authentication and registration certificate
+
+A request can be **signed**, so the wallet can authenticate the relying party (reader authentication),
+and it can carry a **Wallet-Relying Party Registration Certificate (WRPRC)** describing the relying
+party's registered use case. Both are optional and configured on the `DeviceRequest`.
+
+Reader authentication is supplied through a `ReaderAuth`. The signing key is held in an
+`org.multipaz.securearea.SecureArea` (for example `AndroidKeystoreSecureArea`) and never leaves it;
+the access certificate chain is carried in the request so the wallet can establish trust in the reader.
+
+```kotlin
+val readerAuth = ReaderAuth(
+    secureArea = secureArea,                       // holds the reader key and signs the request
+    keyAlias = "readerKey",                        // alias of the key inside the secure area
+    certificateChain = listOf(accessCertificate),  // access certificate first, trust anchor excluded
+    // keyUnlockData = ...                         // only if the key is protected (PIN/biometric)
+)
+
+val deviceRequest = DeviceRequest(
+    docRequests = listOf(docRequest),
+    readerAuth = readerAuth,
+)
+```
+
+To also present a registration certificate, set `registrationCertificate` on the `DeviceRequest` with
+the serialized WRPRC bytes exactly as issued — the JWT (JAdES) or CWT (COSE) form per ETSI TS 119 475.
+For a JWT this is the compact JWS string as bytes (e.g. `jws.toByteArray()`); the bytes are carried
+unchanged in the CBOR `euWrprc` byte string, with no additional encoding applied. The same certificate
+is placed in every `ItemsRequest`'s `requestInfo` under the `euWrprc` key (ETSI TS 119 472-2 clause
+5.3.2).
+
+```kotlin
+val deviceRequest = DeviceRequest(
+    docRequests = listOf(docRequest),
+    readerAuth = readerAuth,               // required whenever a registration certificate is set
+    registrationCertificate = wrprcBytes,  // null when the relying party has none
+)
+```
+
+A registration certificate is bound to the reader's access certificate, so it can only be sent on a
+reader-authenticated request: setting `registrationCertificate` without `readerAuth` throws
+`IllegalArgumentException`.
 
 ## How to contribute
 
