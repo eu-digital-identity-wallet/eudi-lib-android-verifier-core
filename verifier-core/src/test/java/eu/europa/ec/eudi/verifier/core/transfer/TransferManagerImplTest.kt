@@ -7,9 +7,27 @@ import com.android.identity.android.mdoc.deviceretrieval.VerificationHelper
 import com.android.identity.android.mdoc.transport.DataTransportOptions
 import eu.europa.ec.eudi.verifier.core.logging.Logger
 import java.util.concurrent.Executor
+import org.multipaz.cbor.Bstr
+import org.multipaz.cbor.Cbor
 import org.multipaz.mdoc.request.DeviceRequestGenerator
+import org.multipaz.mdoc.request.DeviceRequestParser
 import eu.europa.ec.eudi.verifier.core.request.DeviceRequest
 import eu.europa.ec.eudi.verifier.core.request.DocRequest
+import eu.europa.ec.eudi.verifier.core.request.EU_WRPRC_REQUEST_INFO_KEY
+import eu.europa.ec.eudi.verifier.core.request.ReaderAuth
+import kotlinx.coroutines.runBlocking
+import org.multipaz.asn1.ASN1Integer
+import org.multipaz.crypto.Algorithm
+import org.multipaz.crypto.Crypto
+import org.multipaz.crypto.X500Name
+import org.multipaz.crypto.X509Cert
+import org.multipaz.crypto.javaX509Certificate
+import org.multipaz.securearea.software.SoftwareCreateKeySettings
+import org.multipaz.securearea.software.SoftwareSecureArea
+import org.multipaz.storage.ephemeral.EphemeralStorage
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 class TransferManagerImplTest {
     private lateinit var context: Context
@@ -46,6 +64,11 @@ class TransferManagerImplTest {
             logger = logger,
             verificationHelperFactory = verificationHelperFactory
         )
+    }
+
+    @AfterTest
+    fun tearDown() {
+        unmockkAll()
     }
 
     @Test
@@ -179,5 +202,176 @@ class TransferManagerImplTest {
 
         verify { verificationHelper.sendRequest(deviceRequestBytes) }
         verify { listener.onEvent(TransferEvent.RequestSent) }
+    }
+
+    @Test
+    fun `sendRequest repeats the euWrprc in every ItemsRequest`() {
+        transferManager.startQRDeviceEngagement("mdoc:owBjMS4wAYIB2BhYS6QBAiABIVgg0Gzvq_N_tpQNvbj_qUGmRmheJa1vMKi7mMTH2XDAibgiWCAB9U176w_O7UIvb3kKk5ZbrD3UquIlrWNy_lKwRZNO4AKBgwIBowD1AfQKUFJVDpvDxE3zruZUd4NpTLg")
+
+        val sessionTranscript = Cbor.encode(Bstr(byteArrayOf(1, 2, 3)))
+        every { verificationHelper.sessionTranscript } returns sessionTranscript
+        val sentBytes = slot<ByteArray>()
+        every { verificationHelper.sendRequest(capture(sentBytes)) } just Runs
+
+        val wrprc = "eyJhbGciOiJFUzI1NiJ9.payload.signature".toByteArray()
+        val deviceRequest = DeviceRequest(
+            docRequests = listOf(
+                DocRequest(
+                    docType = "org.iso.18013.5.1.mDL",
+                    itemsRequest = mapOf("org.iso.18013.5.1" to mapOf("family_name" to false))
+                ),
+                DocRequest(
+                    docType = "eu.europa.ec.eudi.pid.1",
+                    itemsRequest = mapOf("eu.europa.ec.eudi.pid.1" to mapOf("family_name" to false))
+                )
+            ),
+            readerAuth = readerAuthFor(Algorithm.ESP256),
+            registrationCertificate = wrprc
+        )
+
+        transferManager.sendRequest(deviceRequest)
+
+        val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
+        assertEquals(2, parsed.docRequests.size)
+        parsed.docRequests.forEach { docRequest ->
+            val embedded = docRequest.requestInfo[EU_WRPRC_REQUEST_INFO_KEY]
+            assertNotNull(embedded, "euWrprc must be present in every ItemsRequest")
+            assertContentEquals(wrprc, Cbor.decode(embedded).asBstr)
+        }
+    }
+
+    @Test
+    fun `sendRequest rejects a registration certificate without reader authentication`() {
+        val deviceRequest = DeviceRequest(
+            docRequests = listOf(
+                DocRequest(
+                    docType = "org.iso.18013.5.1.mDL",
+                    itemsRequest = mapOf("org.iso.18013.5.1" to mapOf("family_name" to false))
+                )
+            ),
+            readerAuth = null,
+            registrationCertificate = "eyJhbGciOiJFUzI1NiJ9.payload.signature".toByteArray()
+        )
+
+        assertFailsWith<IllegalArgumentException> {
+            transferManager.sendRequest(deviceRequest)
+        }
+    }
+
+    @Test
+    fun `sendRequest omits the euWrprc requestInfo when no registration certificate is set`() {
+        transferManager.startQRDeviceEngagement("mdoc:owBjMS4wAYIB2BhYS6QBAiABIVgg0Gzvq_N_tpQNvbj_qUGmRmheJa1vMKi7mMTH2XDAibgiWCAB9U176w_O7UIvb3kKk5ZbrD3UquIlrWNy_lKwRZNO4AKBgwIBowD1AfQKUFJVDpvDxE3zruZUd4NpTLg")
+
+        val sessionTranscript = Cbor.encode(Bstr(byteArrayOf(1, 2, 3)))
+        every { verificationHelper.sessionTranscript } returns sessionTranscript
+        val sentBytes = slot<ByteArray>()
+        every { verificationHelper.sendRequest(capture(sentBytes)) } just Runs
+
+        val deviceRequest = DeviceRequest(
+            listOf(
+                DocRequest(
+                    docType = "org.iso.18013.5.1.mDL",
+                    itemsRequest = mapOf("org.iso.18013.5.1" to mapOf("family_name" to false))
+                )
+            )
+        )
+
+        transferManager.sendRequest(deviceRequest)
+
+        val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
+        assertNull(parsed.docRequests.single().requestInfo[EU_WRPRC_REQUEST_INFO_KEY])
+    }
+
+    @Test
+    fun `sendRequest signs the request so reader authentication verifies for every supported curve`() {
+        transferManager.startQRDeviceEngagement("mdoc:owBjMS4wAYIB2BhYS6QBAiABIVgg0Gzvq_N_tpQNvbj_qUGmRmheJa1vMKi7mMTH2XDAibgiWCAB9U176w_O7UIvb3kKk5ZbrD3UquIlrWNy_lKwRZNO4AKBgwIBowD1AfQKUFJVDpvDxE3zruZUd4NpTLg")
+
+        val sessionTranscript = Cbor.encode(Bstr(byteArrayOf(1, 2, 3)))
+        every { verificationHelper.sessionTranscript } returns sessionTranscript
+        val sentBytes = slot<ByteArray>()
+        every { verificationHelper.sendRequest(capture(sentBytes)) } just Runs
+
+        for (algorithm in listOf(Algorithm.ESP256, Algorithm.ESP384, Algorithm.ESP512)) {
+            val deviceRequest = DeviceRequest(
+                docRequests = listOf(
+                    DocRequest(
+                        docType = "org.iso.18013.5.1.mDL",
+                        itemsRequest = mapOf("org.iso.18013.5.1" to mapOf("family_name" to false))
+                    )
+                ),
+                readerAuth = readerAuthFor(algorithm)
+            )
+
+            transferManager.sendRequest(deviceRequest)
+
+            val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
+            assertTrue(
+                parsed.docRequests.single().readerAuthenticated,
+                "reader authentication must verify for $algorithm"
+            )
+        }
+    }
+
+    @Test
+    fun `sendRequest signs the request and carries the euWrprc together`() {
+        transferManager.startQRDeviceEngagement("mdoc:owBjMS4wAYIB2BhYS6QBAiABIVgg0Gzvq_N_tpQNvbj_qUGmRmheJa1vMKi7mMTH2XDAibgiWCAB9U176w_O7UIvb3kKk5ZbrD3UquIlrWNy_lKwRZNO4AKBgwIBowD1AfQKUFJVDpvDxE3zruZUd4NpTLg")
+
+        val sessionTranscript = Cbor.encode(Bstr(byteArrayOf(1, 2, 3)))
+        every { verificationHelper.sessionTranscript } returns sessionTranscript
+        val sentBytes = slot<ByteArray>()
+        every { verificationHelper.sendRequest(capture(sentBytes)) } just Runs
+
+        val wrprc = "eyJhbGciOiJFUzI1NiJ9.payload.signature".toByteArray()
+        val deviceRequest = DeviceRequest(
+            docRequests = listOf(
+                DocRequest(
+                    docType = "org.iso.18013.5.1.mDL",
+                    itemsRequest = mapOf("org.iso.18013.5.1" to mapOf("family_name" to false))
+                )
+            ),
+            readerAuth = readerAuthFor(Algorithm.ESP256),
+            registrationCertificate = wrprc
+        )
+
+        transferManager.sendRequest(deviceRequest)
+
+        val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
+        val docRequest = parsed.docRequests.single()
+        assertTrue(docRequest.readerAuthenticated, "reader authentication must verify")
+        assertContentEquals(
+            wrprc,
+            Cbor.decode(docRequest.requestInfo.getValue(EU_WRPRC_REQUEST_INFO_KEY)).asBstr
+        )
+    }
+
+    /**
+     * Builds a [ReaderAuth] from a freshly generated reader key and a matching self-signed
+     * certificate on the given [curve], for exercising the request-signing path.
+     */
+    @OptIn(ExperimentalTime::class)
+    private fun readerAuthFor(algorithm: Algorithm): ReaderAuth = runBlocking {
+        val secureArea = SoftwareSecureArea.create(EphemeralStorage())
+        val keyInfo = secureArea.createKey(
+            alias = "reader",
+            createKeySettings = SoftwareCreateKeySettings.Builder().setAlgorithm(algorithm).build()
+        )
+        val caKey = Crypto.createEcPrivateKey(keyInfo.publicKey.curve)
+        val validFrom = Instant.fromEpochSeconds(Clock.System.now().epochSeconds)
+        val validUntil = Instant.fromEpochSeconds(validFrom.epochSeconds + 24L * 60 * 60)
+        val cert = X509Cert.Builder(
+            publicKey = keyInfo.publicKey,
+            signingKey = caKey,
+            signatureAlgorithm = caKey.curve.defaultSigningAlgorithm,
+            serialNumber = ASN1Integer(1),
+            subject = X500Name.fromName("CN=Test Reader"),
+            issuer = X500Name.fromName("CN=Test Reader CA"),
+            validFrom = validFrom,
+            validUntil = validUntil
+        ).build()
+        ReaderAuth(
+            secureArea = secureArea,
+            keyAlias = "reader",
+            certificateChain = listOf(cert.javaX509Certificate)
+        )
     }
 }
