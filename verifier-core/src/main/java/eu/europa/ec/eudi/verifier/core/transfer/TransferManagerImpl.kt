@@ -26,7 +26,6 @@ import eu.europa.ec.eudi.verifier.core.logging.Logger
 import eu.europa.ec.eudi.verifier.core.logging.d
 import eu.europa.ec.eudi.verifier.core.logging.e
 import eu.europa.ec.eudi.verifier.core.request.DeviceRequest
-import eu.europa.ec.eudi.verifier.core.request.Request
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
 import org.multipaz.cbor.Cbor
 import org.multipaz.crypto.Algorithm
@@ -65,6 +64,7 @@ class TransferManagerImpl(
 
         override fun onDeviceEngagementReceived(connectionMethods: List<MdocConnectionMethod>) {
             logger?.d(TAG, "Device Engagement Received")
+            logger?.d(TAG, "ConnectionMethods $connectionMethods")
 
             transferEventListener?.onEvent(TransferEvent.Connecting)
 
@@ -73,7 +73,10 @@ class TransferManagerImpl(
                 MdocRole.MDOC_READER
             )
 
+            // TODO maybe combine with core's engagementMethods
+
             if (availableMdocConnectionMethods.isNotEmpty()) {
+                // Check condition of verifier vs wallet to pick instead of first()
                 verificationHelper?.connect(availableMdocConnectionMethods.first())
             } else {
                 onError(IllegalStateException("No mdoc connection method selected"))
@@ -84,6 +87,9 @@ class TransferManagerImpl(
         override fun onError(error: Throwable) {
             logger?.e(TAG, "Error: ${error.message}", error)
             transferEventListener?.onEvent(TransferEvent.Error(error))
+            if (error is android.nfc.TagLostException) {
+                return
+            }
             stopSession()
         }
 
@@ -157,12 +163,51 @@ class TransferManagerImpl(
         verificationHelper?.setDeviceEngagementFromQrCode(qrCode)
     }
 
-    override fun enableNFCDeviceEngagement(nfcAdapter: NfcAdapter, activity: Activity) {
-        logger?.d(TAG, "Not implemented yet")
+    override fun enableNFCDeviceEngagement(activity: Activity) {
+
+        // TODO config.engagementMethods -> MdocConnectionMethods to determine transaction via Ble or NFC
+
+        val options = DataTransportOptions.Builder()
+            .setBleUseL2CAP(config.bleUseL2CAP)
+            .setBleClearCache(config.bleClearCache)
+            .build()
+
+        verificationHelper = verificationHelperFactory(
+            context,
+            responseListener,
+            context.mainExecutor(),
+            options
+        )
+
+        val adapter = NfcAdapter.getDefaultAdapter(context)
+        if (adapter == null) {
+            val error = IllegalStateException("NFC is not available on this device.")
+            logger?.e(TAG, error.message.toString())
+            transferEventListener?.onEvent(TransferEvent.Error(error))
+            return
+        }
+
+        adapter.enableReaderMode(
+            activity,
+            { tag ->
+                verificationHelper?.nfcProcessOnTagDiscovered(tag)
+                logger?.d(TAG, "NFC Tag Discovered: $tag")
+            },
+            NfcAdapter.FLAG_READER_NFC_A + NfcAdapter.FLAG_READER_NFC_B
+                    + NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK + NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS,
+            null
+        )
     }
 
-    override fun disableNFCDeviceEngagement() {
-        logger?.d(TAG, "Not implemented yet")
+    /**
+     * Disables NFC engagement for the given Activity.
+     * This MUST be called from the Activity's onPause().
+     * @param activity The activity that previously enabled reader mode.
+     */
+    override fun disableNFCDeviceEngagement(activity: Activity) {
+        logger?.d(TAG, "Disabling NFC Reader Mode for Activity: ${activity.javaClass.simpleName}")
+        val nfcAdapter = NfcAdapter.getDefaultAdapter(activity)
+        nfcAdapter?.disableReaderMode(activity)
     }
 
     override fun sendRequest(request: DeviceRequest) {

@@ -48,12 +48,12 @@ interface TransferManager {
      * @param nfcAdapter The NFC adapter to use.
      * @param activity The activity context for NFC operations.
      */
-    fun enableNFCDeviceEngagement(nfcAdapter: NfcAdapter, activity: Activity)
+    fun enableNFCDeviceEngagement(activity: Activity)
 
     /**
      * Disables NFC device engagement.
      */
-    fun disableNFCDeviceEngagement()
+    fun disableNFCDeviceEngagement(activity: Activity)
 
     /**
      * Sends a request to the holder device.

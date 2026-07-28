@@ -10,6 +10,7 @@ import java.util.concurrent.Executor
 import org.multipaz.mdoc.request.DeviceRequestGenerator
 import eu.europa.ec.eudi.verifier.core.request.DeviceRequest
 import eu.europa.ec.eudi.verifier.core.request.DocRequest
+import org.multipaz.mdoc.connectionmethod.MdocConnectionMethod
 
 class TransferManagerImplTest {
     private lateinit var context: Context
@@ -35,7 +36,7 @@ class TransferManagerImplTest {
         listener = mockk(relaxed = true)
 
         // Capture the VerificationHelper.Listener for use in tests
-        verificationHelperFactory = { _, l, _, _ ->
+        verificationHelperFactory = { _, l, _, _->
             capturedVerificationListener = l
             verificationHelper
         }
