@@ -39,15 +39,10 @@ class TransferManagerImpl(
     private val context: Context,
     private val config: TransferConfig,
     var logger: Logger? = null,
-    private val verificationHelperFactory: (Context, VerificationHelper.Listener, Executor, DataTransportOptions, List<MdocConnectionMethod>?) -> VerificationHelper = { ctx, listener, executor, options, connectionMethods ->
-        val builder = VerificationHelper.Builder(ctx, listener, executor)
+    private val verificationHelperFactory: (Context, VerificationHelper.Listener, Executor, DataTransportOptions) -> VerificationHelper = { ctx, listener, executor, options ->
+        VerificationHelper.Builder(ctx, listener, executor)
             .setDataTransportOptions(options)
-
-        connectionMethods?.let {
-            builder.setNegotiatedHandoverConnectionMethods(it)
-        }
-
-        builder.build()
+            .build()
     }
 ) : TransferManager {
 
@@ -69,6 +64,7 @@ class TransferManagerImpl(
 
         override fun onDeviceEngagementReceived(connectionMethods: List<MdocConnectionMethod>) {
             logger?.d(TAG, "Device Engagement Received")
+            logger?.d(TAG, "ConnectionMethods $connectionMethods")
 
             transferEventListener?.onEvent(TransferEvent.Connecting)
 
@@ -77,7 +73,10 @@ class TransferManagerImpl(
                 MdocRole.MDOC_READER
             )
 
+            // TODO maybe combine with core's engagementMethods
+
             if (availableMdocConnectionMethods.isNotEmpty()) {
+                // Check condition of verifier vs wallet to pick instead of first()
                 verificationHelper?.connect(availableMdocConnectionMethods.first())
             } else {
                 onError(IllegalStateException("No mdoc connection method selected"))
@@ -88,6 +87,9 @@ class TransferManagerImpl(
         override fun onError(error: Throwable) {
             logger?.e(TAG, "Error: ${error.message}", error)
             transferEventListener?.onEvent(TransferEvent.Error(error))
+            if (error is android.nfc.TagLostException) {
+                return
+            }
             stopSession()
         }
 
@@ -155,8 +157,7 @@ class TransferManagerImpl(
             context,
             responseListener,
             context.mainExecutor(),
-            options,
-            null
+            options
         )
 
         verificationHelper?.setDeviceEngagementFromQrCode(qrCode)
@@ -164,22 +165,18 @@ class TransferManagerImpl(
 
     override fun enableNFCDeviceEngagement(activity: Activity) {
 
+        // TODO config.engagementMethods -> MdocConnectionMethods to determine transaction via Ble or NFC
+
         val options = DataTransportOptions.Builder()
             .setBleUseL2CAP(config.bleUseL2CAP)
             .setBleClearCache(config.bleClearCache)
             .build()
 
-        val negotiatedConnectionMethods = config.engagementMethods.getOrDefault(
-            TransferConfig.EngagementMethod.NFC,
-            emptyList()
-        )
-
         verificationHelper = verificationHelperFactory(
             context,
             responseListener,
             context.mainExecutor(),
-            options,
-            negotiatedConnectionMethods
+            options
         )
 
         val adapter = NfcAdapter.getDefaultAdapter(context)

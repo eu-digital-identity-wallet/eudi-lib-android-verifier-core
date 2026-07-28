@@ -20,7 +20,7 @@ class TransferManagerImplTest {
     private lateinit var transferManager: TransferManagerImpl
     private lateinit var executor: Executor
     private lateinit var listener: TransferEvent.Listener
-    private lateinit var verificationHelperFactory: (Context, VerificationHelper.Listener, Executor, DataTransportOptions, List<MdocConnectionMethod>?) -> VerificationHelper
+    private lateinit var verificationHelperFactory: (Context, VerificationHelper.Listener, Executor, DataTransportOptions) -> VerificationHelper
     private lateinit var capturedVerificationListener: VerificationHelper.Listener
 
     @BeforeTest
@@ -36,7 +36,7 @@ class TransferManagerImplTest {
         listener = mockk(relaxed = true)
 
         // Capture the VerificationHelper.Listener for use in tests
-        verificationHelperFactory = { _, l, _, _, _->
+        verificationHelperFactory = { _, l, _, _->
             capturedVerificationListener = l
             verificationHelper
         }
