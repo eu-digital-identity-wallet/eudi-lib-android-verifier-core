@@ -256,6 +256,9 @@ val transferManager = eudiVerifier.createTransferManager {
     clearBleCacheOnDisconnect(true)
 }
 
+// a coroutine scope
+val scope = CoroutineScope(Dispatchers.Default)
+
 // attach listener
 
 transferManager.addListener { event ->
@@ -281,8 +284,8 @@ transferManager.addListener { event ->
             // The request can optionally be signed (reader authentication) and carry a relying party
             // registration certificate — see "Reader authentication and registration certificate".
             val deviceRequest = DeviceRequest(docRequests = listOf(docRequest))
-            // send device request
-            event.transferManager.sendRequest(deviceRequest)
+            // send device request; sendRequest is a suspending function, so launch it from a coroutine
+            scope.launch { event.transferManager.sendRequest(deviceRequest) }
         }
 
         TransferEvent.Connecting -> println("Connecting")

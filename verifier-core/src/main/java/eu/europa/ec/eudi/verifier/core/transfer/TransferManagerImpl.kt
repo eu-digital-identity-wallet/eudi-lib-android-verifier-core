@@ -30,7 +30,6 @@ import eu.europa.ec.eudi.verifier.core.request.EU_WRPRC_REQUEST_INFO_KEY
 import eu.europa.ec.eudi.verifier.core.response.DeviceResponse
 import org.multipaz.cbor.Bstr
 import org.multipaz.cbor.Cbor
-import kotlinx.coroutines.runBlocking
 import org.multipaz.crypto.Algorithm
 import org.multipaz.crypto.X509CertChain
 import org.multipaz.crypto.fromJavaX509Certificates
@@ -169,7 +168,7 @@ class TransferManagerImpl(
         logger?.d(TAG, "Not implemented yet")
     }
 
-    override fun sendRequest(request: DeviceRequest) {
+    override suspend fun sendRequest(request: DeviceRequest) {
         logger?.d(TAG, "About to send Document Request")
         // A registration certificate is bound to the reader's access certificate, so it can only be
         // sent on a request that is reader-authenticated.
@@ -192,17 +191,15 @@ class TransferManagerImpl(
                 request.docRequests.forEach { doc ->
                     if (readerAuth != null) {
                         // Signed request
-                        runBlocking {
-                            addDocumentRequest(
-                                docType = doc.docType,
-                                itemsToRequest = doc.itemsRequest,
-                                requestInfo = requestInfo,
-                                readerKeySecureArea = readerAuth.secureArea,
-                                readerKeyAlias = readerAuth.keyAlias,
-                                readerKeyCertificateChain = readerCertificateChain!!,
-                                keyUnlockData = readerAuth.keyUnlockData,
-                            )
-                        }
+                        addDocumentRequest(
+                            docType = doc.docType,
+                            itemsToRequest = doc.itemsRequest,
+                            requestInfo = requestInfo,
+                            readerKeySecureArea = readerAuth.secureArea,
+                            readerKeyAlias = readerAuth.keyAlias,
+                            readerKeyCertificateChain = readerCertificateChain!!,
+                            keyUnlockData = readerAuth.keyUnlockData,
+                        )
                     } else {
                         // Unsigned request
                         addDocumentRequest(

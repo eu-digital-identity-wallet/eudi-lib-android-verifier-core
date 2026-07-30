@@ -59,7 +59,7 @@ interface TransferManager {
      * Sends a request to the holder device.
      * @param request The request to send.
      */
-    fun sendRequest(request: DeviceRequest)
+    suspend fun sendRequest(request: DeviceRequest)
 
     /**
      * Stops the current transfer session.

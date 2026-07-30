@@ -198,7 +198,7 @@ class TransferManagerImplTest {
 
         every { verificationHelper.sendRequest(deviceRequestBytes) } just Runs
 
-        transferManager.sendRequest(deviceRequest)
+        runBlocking { transferManager.sendRequest(deviceRequest) }
 
         verify { verificationHelper.sendRequest(deviceRequestBytes) }
         verify { listener.onEvent(TransferEvent.RequestSent) }
@@ -229,7 +229,7 @@ class TransferManagerImplTest {
             registrationCertificate = wrprc
         )
 
-        transferManager.sendRequest(deviceRequest)
+        runBlocking { transferManager.sendRequest(deviceRequest) }
 
         val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
         assertEquals(2, parsed.docRequests.size)
@@ -254,7 +254,7 @@ class TransferManagerImplTest {
         )
 
         assertFailsWith<IllegalArgumentException> {
-            transferManager.sendRequest(deviceRequest)
+            runBlocking { transferManager.sendRequest(deviceRequest) }
         }
     }
 
@@ -276,7 +276,7 @@ class TransferManagerImplTest {
             )
         )
 
-        transferManager.sendRequest(deviceRequest)
+        runBlocking { transferManager.sendRequest(deviceRequest) }
 
         val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
         assertNull(parsed.docRequests.single().requestInfo[EU_WRPRC_REQUEST_INFO_KEY])
@@ -302,7 +302,7 @@ class TransferManagerImplTest {
                 readerAuth = readerAuthFor(algorithm)
             )
 
-            transferManager.sendRequest(deviceRequest)
+            runBlocking { transferManager.sendRequest(deviceRequest) }
 
             val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
             assertTrue(
@@ -333,7 +333,7 @@ class TransferManagerImplTest {
             registrationCertificate = wrprc
         )
 
-        transferManager.sendRequest(deviceRequest)
+        runBlocking { transferManager.sendRequest(deviceRequest) }
 
         val parsed = DeviceRequestParser(sentBytes.captured, sessionTranscript).parse()
         val docRequest = parsed.docRequests.single()
