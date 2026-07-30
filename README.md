@@ -90,7 +90,7 @@ file.
 
 ```groovy
 dependencies {
-    implementation "eu.europa.ec.eudi:eudi-lib-android-verifier-core:0.1.0"
+    implementation "eu.europa.ec.eudi:eudi-lib-android-verifier-core:0.2.0-SNAPSHOT"
 }
 ```
 
